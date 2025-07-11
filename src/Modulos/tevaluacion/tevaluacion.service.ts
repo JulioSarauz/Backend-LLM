@@ -5,8 +5,7 @@ import { Model } from 'mongoose';
 import { TEvaluacion } from './tevaluacion.schema';
 import * as pdfParse from 'pdf-parse';
 import OpenAI from 'openai';
-
-
+import { stopwordsEN } from './stopwords/stopEn';
 
 @Injectable()
 export class TEvaluacionService {
@@ -65,6 +64,7 @@ export class TEvaluacionService {
     content: string,
     keywords: string[],
   ): Promise<{ score: number; explanation: string }> {
+    content = this.reprocesarTexto(content);
     const prompt = `
     Evalúa el siguiente texto de una hoja de vida y compáralo con estas palabras clave: ${keywords.join(', ')}.
     Usa análisis semántico (sinónimos, contexto, etc.) y devuelve un JSON con:
@@ -76,10 +76,12 @@ export class TEvaluacionService {
     Hoja de vida:
     ${content}
     `;
-
+    console.log(content);
+    console.log(keywords);
+    
     try {
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4.1',
+        model: 'gpt-3.5-turbo',//'gpt-4.1',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.4,
       });
@@ -95,5 +97,20 @@ export class TEvaluacionService {
       throw new InternalServerErrorException('Error evaluando hoja de vida con ChatGPT');
     }
   
+  }
+
+  reprocesarTexto(raw: string): string {
+    let stopwords = require('stopwords-es') as string[];
+    stopwords.concat(stopwordsEN)
+    // 1. Pasar todo a minúsculas
+    let texto = raw.toLowerCase();
+    // 2. Eliminar caracteres no alfabéticos (excepto espacios)
+    texto = texto.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/g, ' ');
+    // 3. Tokenizar por palabra
+    const palabras = texto.split(/\s+/);
+    // 4. Eliminar stopwords
+    const palabrasFiltradas = palabras.filter(palabra => !stopwords.includes(palabra));
+    // 5. Reconstruir el texto limpio
+    return palabrasFiltradas.join(' ');
   }
 }
