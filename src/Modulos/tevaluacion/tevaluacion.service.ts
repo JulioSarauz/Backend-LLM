@@ -10,7 +10,7 @@ import OpenAI from 'openai';
 
 @Injectable()
 export class TEvaluacionService {
-  private readonly openai: OpenAI;
+  private readonly openai: OpenAI; 
 
   
   constructor(
