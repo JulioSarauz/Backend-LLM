@@ -17,7 +17,6 @@ export class TEvaluacionService {
     @InjectModel(TEvaluacion.name) private tevaluacionModel: Model<TEvaluacion>
   ) {
      this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
     })
   }
 
