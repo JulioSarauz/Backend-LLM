@@ -23,7 +23,7 @@ export class AdopcionesController {
     return this.tevaluacionService.aprobar(id, estado);
   }
 
-  @Post('upload')
+  @Post('evaluar')
   @UseInterceptors(FilesInterceptor('files'))
   async upload(
     @UploadedFiles() files: Express.Multer.File[],

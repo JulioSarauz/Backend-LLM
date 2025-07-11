@@ -19,7 +19,32 @@ export class TEvaluacionService {
      this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     })
+    console.log(process.env.OPENAI_API_KEY);
+    // Ejemplo de uso
+    this.validarClave(process.env.OPENAI_API_KEY!).then((esValida) => {
+      console.log(esValida ? '✅ API Key válida' : '❌ API Key inválida');
+});
+    
   }
+
+
+  async validarClave(apiKey: string): Promise<boolean> {
+  const openai = new OpenAI({ apiKey });
+
+  try {
+    // Llamada mínima para validar la clave
+    const models = await openai.models.list();
+    return models.data.length > 0; // si devuelve modelos, la clave es válida
+  } catch (error: any) {
+    if (error.status === 401 || error.code === 'invalid_api_key') {
+      console.error('❌ Clave inválida');
+      return false;
+    }
+    console.error('⚠️ Error inesperado:', error);
+    return false;
+  }
+}
+
 
   findAll() {
     return this.tevaluacionModel.find();
@@ -69,6 +94,6 @@ export class TEvaluacionService {
       console.error('Error en evaluateResumeCHATGPT:', error);
       throw new InternalServerErrorException('Error evaluando hoja de vida con ChatGPT');
     }
+  
   }
-
 }
