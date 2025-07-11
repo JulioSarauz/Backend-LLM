@@ -1,2 +1,10 @@
-MONGO_URI=mongodb+srv://jc:p8rf47PWfMkHzVFR@cluster0.s4txg31.mongodb.net/
-OPENAI_API_KEY=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
+mongodb+srv:
+//
+jc:p8rf47PWfMkHzVFR@cluster0.
+s4txg31.mongodb.net
+/
+
+sk
+-proj
+-3hjk4iOSYfAvHEHf
+-eSv2XUMMRiPkejQ8F9H_lw1QHZ91r_Ot3ZggwSz5s4Tq5lyOhjoJohXH8T3BlbkFJcKKdgDqSlcl7G193rDj1Xj7DnWSwcIDu3xWH01VA5SiVUQRY2Gl6NB9fuJGFjxUPADK1711lsA
