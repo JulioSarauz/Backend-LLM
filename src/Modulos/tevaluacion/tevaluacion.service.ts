@@ -6,6 +6,8 @@ import { TEvaluacion } from './tevaluacion.schema';
 import * as pdfParse from 'pdf-parse';
 import OpenAI from 'openai';
 import { stopwordsEN } from './stopwords/stopEn';
+// Importa la librería necesaria
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 @Injectable()
 export class TEvaluacionService {
@@ -23,7 +25,7 @@ export class TEvaluacionService {
     this.validarClave(process.env.OPENAI_API_KEY!).then((esValida) => {
       console.log(esValida ? '✅ API Key válida' : '❌ API Key inválida');
 });
-    
+
   }
 
 
@@ -49,6 +51,39 @@ export class TEvaluacionService {
     return this.tevaluacionModel.find();
   }
 
+
+  async generateGeminiCompletion(prompt) {
+  try {
+        const GEMINI_API_KEY:any = process.env.GEMINIKEY; // Ejemplo
+
+    // Inicializa el cliente
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+
+    // Elige el modelo a usar
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Genera el contenido con el prompt y la temperatura deseada
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.4,
+      },
+    });
+
+    // Extrae la respuesta de texto del resultado
+    const response = await result.response;
+    const text = response.text();
+
+    console.log(text);
+    return text;
+  } catch (error) {
+    console.error("Error al llamar a Gemini:", error);
+    return null;
+  }
+}
+
+
+
+
   create(data: Partial<TEvaluacion>) {
     const cleanedData = Object.fromEntries(
       Object.entries(data).map(([key, value]) => [key.replace(/:$/, ''), value])
@@ -63,7 +98,11 @@ export class TEvaluacionService {
   async evaluateResumeCHATGPT(
     content: string,
     keywords: string[],
-  ): Promise<{ score: number; explanation: string }> {
+  ){
+
+
+
+
     let prompt = `
     Evalúa el siguiente texto de varias hojas de vidas y compáralas con estas palabras clave: ${keywords.join(', ')}.
     Usa análisis semántico (sinónimos, contexto, etc.) y devuelve un JSON con:
@@ -74,6 +113,9 @@ export class TEvaluacionService {
     }
     ${content}
     `;
+
+    
+    return await this.generateGeminiCompletion(prompt);
     const maxChars = 3000;
     prompt = prompt.length > maxChars ? prompt.slice(0, maxChars) : prompt;
     console.log(prompt);
