@@ -64,7 +64,7 @@ export class TEvaluacionService {
     content: string,
     keywords: string[],
   ): Promise<{ score: number; explanation: string }> {
-    const prompt = `
+    let prompt = `
     Evalúa el siguiente texto de varias hojas de vidas y compáralas con estas palabras clave: ${keywords.join(', ')}.
     Usa análisis semántico (sinónimos, contexto, etc.) y devuelve un JSON con:
     {
@@ -74,7 +74,10 @@ export class TEvaluacionService {
     }
     ${content}
     `;
+    const maxChars = 3000;
+    prompt = prompt.length > maxChars ? prompt.slice(0, maxChars) : prompt;
     console.log(prompt);
+    console.log(prompt.length);
     
     try {
       const completion = await this.openai.chat.completions.create({
