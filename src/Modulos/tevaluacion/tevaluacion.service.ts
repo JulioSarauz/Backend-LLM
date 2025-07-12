@@ -64,20 +64,17 @@ export class TEvaluacionService {
     content: string,
     keywords: string[],
   ): Promise<{ score: number; explanation: string }> {
-    content = this.reprocesarTexto(content);
     const prompt = `
-    Evalúa el siguiente texto de una hoja de vida y compáralo con estas palabras clave: ${keywords.join(', ')}.
+    Evalúa el siguiente texto de varias hojas de vidas y compáralas con estas palabras clave: ${keywords.join(', ')}.
     Usa análisis semántico (sinónimos, contexto, etc.) y devuelve un JSON con:
     {
+      "postulante":"Nombres completos"
       "score": 0-100,
       "explanation": "por qué consideras que esta hoja de vida es relevante"
     }
-
-    Hoja de vida:
     ${content}
     `;
-    console.log(content);
-    console.log(keywords);
+    console.log(prompt);
     
     try {
       const completion = await this.openai.chat.completions.create({
@@ -97,6 +94,15 @@ export class TEvaluacionService {
       throw new InternalServerErrorException('Error evaluando hoja de vida con ChatGPT');
     }
   
+  }
+
+  ObtenerContenido(content: string, numero:number){
+    try{
+      content = this.reprocesarTexto(content);
+      return 'Hoja de vida '+numero+ ': '+content;
+    }catch(e){
+      return '';
+    }
   }
 
   reprocesarTexto(raw: string): string {
