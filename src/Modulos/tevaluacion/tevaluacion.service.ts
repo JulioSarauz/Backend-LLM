@@ -95,14 +95,10 @@ export class TEvaluacionService {
     return this.tevaluacionModel.findByIdAndUpdate(id, { estado }, { new: true });
   }
 
-  async evaluateResumeCHATGPT(
+  async evaluateResumeGEMINI(
     content: string,
     keywords: string[],
   ){
-
-
-
-
     let prompt = `
     Evalúa el siguiente texto de varias hojas de vidas y compáralas con estas palabras clave: ${keywords.join(', ')}.
     Usa análisis semántico (sinónimos, contexto, etc.) y devuelve un JSON con:
@@ -112,33 +108,7 @@ export class TEvaluacionService {
       "explanation": "por qué consideras que esta hoja de vida es relevante"
     }
     ${content}
-    `;
-
-    
-    return await this.generateGeminiCompletion(prompt);
-    const maxChars = 3000;
-    prompt = prompt.length > maxChars ? prompt.slice(0, maxChars) : prompt;
-    console.log(prompt);
-    console.log(prompt.length);
-    
-    try {
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',//'gpt-4.1',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.4,
-      });
-
-      if (!completion.choices || completion.choices.length === 0) {
-        throw new Error('Respuesta vacía del modelo OpenAI');
-      }
-
-      const response = completion.choices[0].message?.content || '{}';
-      return JSON.parse(response);
-    } catch (error) {
-      console.error('Error en evaluateResumeCHATGPT:', error);
-      throw new InternalServerErrorException('Error evaluando hoja de vida con ChatGPT');
-    }
-  
+    `;  
   }
 
   ObtenerContenido(content: string, numero:number){

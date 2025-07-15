@@ -4,7 +4,7 @@ import { TEvaluacionService } from './tevaluacion.service';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import * as pdfParse from 'pdf-parse';
 
-@Controller('evaluacion')
+@Controller('cvs')
 export class AdopcionesController {
   constructor(private readonly tevaluacionService: TEvaluacionService) { }
 
@@ -23,7 +23,7 @@ export class AdopcionesController {
     return this.tevaluacionService.aprobar(id, estado);
   }
 
-  @Post('evaluar')
+  @Post('updates')
   @UseInterceptors(FilesInterceptor('files'))
   async upload(
     @UploadedFiles() files: Express.Multer.File[],
@@ -44,6 +44,6 @@ export class AdopcionesController {
       content += this.tevaluacionService.ObtenerContenido(lector,i) + '\n';
     }
     //Enviar a evaluar
-    return this.tevaluacionService.evaluateResumeCHATGPT(content, keywords);
+    return this.tevaluacionService.evaluateResumeGEMINI(content, keywords);
   }
 }
