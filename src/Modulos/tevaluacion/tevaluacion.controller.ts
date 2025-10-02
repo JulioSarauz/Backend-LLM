@@ -23,7 +23,7 @@ export class AdopcionesController {
     return this.tevaluacionService.aprobar(id, estado);
   }
 
-  @Post('upload')
+  @Post('evaluar')
   @UseInterceptors(FilesInterceptor('files'))
   async upload(
     @UploadedFiles() files: Express.Multer.File[],
@@ -35,9 +35,15 @@ export class AdopcionesController {
     if (!files || files.length === 0) {
       throw new BadRequestException('No se subió ningún archivo');
     }
-    const file = files[0];
-    const pdfContent = await pdfParse(file.buffer);
-    const content = pdfContent.text;
+    //lectura de todos los archivos que se suban
+    let content = '';
+    for(let i=0; i < files.length; i++){
+      const file = files[i];
+      const pdfContent = await pdfParse(file.buffer);
+      const lector = pdfContent.text;
+      content += this.tevaluacionService.ObtenerContenido(lector,i) + '\n';
+    }
+    //Enviar a evaluar
     return this.tevaluacionService.evaluateResumeCHATGPT(content, keywords);
   }
 }
