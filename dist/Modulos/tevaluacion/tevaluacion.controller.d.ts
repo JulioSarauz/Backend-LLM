@@ -1,5 +1,5 @@
 import { TEvaluacionService } from './tevaluacion.service';
-export declare class AdopcionesController {
+export declare class EvaluacionController {
     private readonly tevaluacionService;
     constructor(tevaluacionService: TEvaluacionService);
     findAll(): import("mongoose").Query<(import("mongoose").Document<unknown, {}, import("./tevaluacion.schema").TEvaluacion, {}> & import("./tevaluacion.schema").TEvaluacion & Required<{

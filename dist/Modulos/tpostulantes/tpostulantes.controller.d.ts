@@ -1,5 +1,5 @@
 import { TPostulanteService } from './tpostulantes.service';
-export declare class MascotasController {
+export declare class PostulantesController {
     private readonly tpostulanteService;
     constructor(tpostulanteService: TPostulanteService);
     findAll(): import("mongoose").Query<(import("mongoose").Document<unknown, {}, import("./tpostulantes.schema").TPostulante, {}> & import("./tpostulantes.schema").TPostulante & Required<{

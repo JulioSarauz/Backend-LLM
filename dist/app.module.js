@@ -12,12 +12,13 @@ const config_1 = require("@nestjs/config");
 const mongoose_1 = require("@nestjs/mongoose");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
-const tevaluacion_controller_1 = require("./Modulos/tevaluacion/tevaluacion.controller");
-const tpostulantes_controller_1 = require("./Modulos/tpostulantes/tpostulantes.controller");
 const tusuario_schema_1 = require("./Modulos/tusuario/tusuario.schema");
 const tevaluacion_schema_1 = require("./Modulos/tevaluacion/tevaluacion.schema");
 const tpostulantes_schema_1 = require("./Modulos/tpostulantes/tpostulantes.schema");
 const SERVICIOS_1 = require("./Constantes/SERVICIOS");
+const tpostulantes_controller_1 = require("./Modulos/tpostulantes/tpostulantes.controller");
+const tevaluacion_controller_1 = require("./Modulos/tevaluacion/tevaluacion.controller");
+const tusuario_controller_1 = require("./Modulos/tusuario/tusuario.controller");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -40,7 +41,7 @@ exports.AppModule = AppModule = __decorate([
                 { name: tpostulantes_schema_1.TPostulante.name, schema: tpostulantes_schema_1.TPostulanteSchema },
             ]),
         ],
-        controllers: [app_controller_1.AppController, tpostulantes_controller_1.MascotasController, tevaluacion_controller_1.AdopcionesController],
+        controllers: [app_controller_1.AppController, tpostulantes_controller_1.PostulantesController, tevaluacion_controller_1.EvaluacionController, tusuario_controller_1.UsuarioController],
         providers: [app_service_1.AppService, ...SERVICIOS_1.SERVICIOS],
     })
 ], AppModule);

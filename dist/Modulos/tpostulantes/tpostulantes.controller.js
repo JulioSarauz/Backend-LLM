@@ -12,10 +12,10 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MascotasController = void 0;
+exports.PostulantesController = void 0;
 const common_1 = require("@nestjs/common");
 const tpostulantes_service_1 = require("./tpostulantes.service");
-let MascotasController = class MascotasController {
+let PostulantesController = class PostulantesController {
     tpostulanteService;
     constructor(tpostulanteService) {
         this.tpostulanteService = tpostulanteService;
@@ -36,27 +36,27 @@ let MascotasController = class MascotasController {
         return this.tpostulanteService.delete(id);
     }
 };
-exports.MascotasController = MascotasController;
+exports.PostulantesController = PostulantesController;
 __decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], MascotasController.prototype, "findAll", null);
+], PostulantesController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], MascotasController.prototype, "findOne", null);
+], PostulantesController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], MascotasController.prototype, "create", null);
+], PostulantesController.prototype, "create", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     __param(0, (0, common_1.Param)('id')),
@@ -64,16 +64,16 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
-], MascotasController.prototype, "update", null);
+], PostulantesController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], MascotasController.prototype, "remove", null);
-exports.MascotasController = MascotasController = __decorate([
+], PostulantesController.prototype, "remove", null);
+exports.PostulantesController = PostulantesController = __decorate([
     (0, common_1.Controller)('postulante'),
     __metadata("design:paramtypes", [tpostulantes_service_1.TPostulanteService])
-], MascotasController);
+], PostulantesController);
 //# sourceMappingURL=tpostulantes.controller.js.map

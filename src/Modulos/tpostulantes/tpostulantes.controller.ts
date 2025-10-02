@@ -1,9 +1,8 @@
-// mascotas/mascotas.controller.ts
 import { Controller, Get, Post, Patch, Delete, Param, Body } from '@nestjs/common';
 import { TPostulanteService } from './tpostulantes.service';
 
 @Controller('postulante')
-export class MascotasController {
+export class PostulantesController {
   constructor(private readonly tpostulanteService: TPostulanteService) {}
 
   @Get()

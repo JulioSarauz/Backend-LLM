@@ -12,12 +12,12 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AdopcionesController = void 0;
+exports.EvaluacionController = void 0;
 const common_1 = require("@nestjs/common");
 const tevaluacion_service_1 = require("./tevaluacion.service");
 const platform_express_1 = require("@nestjs/platform-express");
 const pdfParse = require("pdf-parse");
-let AdopcionesController = class AdopcionesController {
+let EvaluacionController = class EvaluacionController {
     tevaluacionService;
     constructor(tevaluacionService) {
         this.tevaluacionService = tevaluacionService;
@@ -48,20 +48,20 @@ let AdopcionesController = class AdopcionesController {
         return this.tevaluacionService.evaluateResumeCHATGPT(content, keywords);
     }
 };
-exports.AdopcionesController = AdopcionesController;
+exports.EvaluacionController = EvaluacionController;
 __decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], AdopcionesController.prototype, "findAll", null);
+], EvaluacionController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], AdopcionesController.prototype, "create", null);
+], EvaluacionController.prototype, "create", null);
 __decorate([
     (0, common_1.Patch)(':id/aprobar'),
     __param(0, (0, common_1.Param)('id')),
@@ -69,7 +69,7 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
-], AdopcionesController.prototype, "aprobar", null);
+], EvaluacionController.prototype, "aprobar", null);
 __decorate([
     (0, common_1.Post)('evaluar'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('files')),
@@ -78,9 +78,9 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Array, Object]),
     __metadata("design:returntype", Promise)
-], AdopcionesController.prototype, "upload", null);
-exports.AdopcionesController = AdopcionesController = __decorate([
+], EvaluacionController.prototype, "upload", null);
+exports.EvaluacionController = EvaluacionController = __decorate([
     (0, common_1.Controller)('evaluacion'),
     __metadata("design:paramtypes", [tevaluacion_service_1.TEvaluacionService])
-], AdopcionesController);
+], EvaluacionController);
 //# sourceMappingURL=tevaluacion.controller.js.map

@@ -5,7 +5,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import * as pdfParse from 'pdf-parse';
 
 @Controller('evaluacion')
-export class AdopcionesController {
+export class EvaluacionController {
   constructor(private readonly tevaluacionService: TEvaluacionService) { }
 
   @Get()

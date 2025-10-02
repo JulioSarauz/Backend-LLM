@@ -3,12 +3,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AdopcionesController } from './Modulos/tevaluacion/tevaluacion.controller';
-import { MascotasController } from './Modulos/tpostulantes/tpostulantes.controller';
 import { TUsuario, TUsuarioSchema } from './Modulos/tusuario/tusuario.schema';
 import { TEvaluacion, TEvaluacionSchema } from './Modulos/tevaluacion/tevaluacion.schema';
 import { TPostulante, TPostulanteSchema } from './Modulos/tpostulantes/tpostulantes.schema';
 import { SERVICIOS } from './Constantes/SERVICIOS';
+import { PostulantesController } from './Modulos/tpostulantes/tpostulantes.controller';
+import { EvaluacionController } from './Modulos/tevaluacion/tevaluacion.controller';
+import { UsuarioController } from './Modulos/tusuario/tusuario.controller';
 
 @Module({
   imports: [
@@ -18,7 +19,6 @@ import { SERVICIOS } from './Constantes/SERVICIOS';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         uri: configService.get<string>('MONGO_URI'),
-        // Opcional: mejoras para compatibilidad
         useNewUrlParser: true,
         useUnifiedTopology: true,
       }),
@@ -29,7 +29,7 @@ import { SERVICIOS } from './Constantes/SERVICIOS';
       { name: TPostulante.name, schema: TPostulanteSchema },
     ]),
   ],
-  controllers: [AppController, MascotasController, AdopcionesController],
+  controllers: [AppController, PostulantesController, EvaluacionController,UsuarioController],
   providers: [AppService, ...SERVICIOS],
 })
 export class AppModule {}
