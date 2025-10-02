@@ -24,24 +24,24 @@ exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            config_1.ConfigModule.forRoot({
-                isGlobal: true,
-            }),
+            config_1.ConfigModule.forRoot({ isGlobal: true }),
             mongoose_1.MongooseModule.forRootAsync({
                 imports: [config_1.ConfigModule],
+                inject: [config_1.ConfigService],
                 useFactory: async (configService) => ({
                     uri: configService.get('MONGO_URI'),
+                    useNewUrlParser: true,
+                    useUnifiedTopology: true,
                 }),
-                inject: [config_1.ConfigService],
             }),
-            mongoose_1.MongooseModule.forFeature([{ name: tusuario_schema_1.TUsuario.name, schema: tusuario_schema_1.TUsuarioSchema }]),
-            mongoose_1.MongooseModule.forFeature([{ name: tevaluacion_schema_1.TEvaluacion.name, schema: tevaluacion_schema_1.TEvaluacionSchema }]),
-            mongoose_1.MongooseModule.forFeature([{ name: tpostulantes_schema_1.TPostulante.name, schema: tpostulantes_schema_1.TPostulanteSchema }]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: tusuario_schema_1.TUsuario.name, schema: tusuario_schema_1.TUsuarioSchema },
+                { name: tevaluacion_schema_1.TEvaluacion.name, schema: tevaluacion_schema_1.TEvaluacionSchema },
+                { name: tpostulantes_schema_1.TPostulante.name, schema: tpostulantes_schema_1.TPostulanteSchema },
+            ]),
         ],
         controllers: [app_controller_1.AppController, tpostulantes_controller_1.MascotasController, tevaluacion_controller_1.AdopcionesController],
-        providers: [app_service_1.AppService,
-            ...SERVICIOS_1.SERVICIOS
-        ],
+        providers: [app_service_1.AppService, ...SERVICIOS_1.SERVICIOS],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

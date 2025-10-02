@@ -1,4 +1,3 @@
-// app.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -13,23 +12,24 @@ import { SERVICIOS } from './Constantes/SERVICIOS';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true, // ✅ hace disponible la configuración en toda la app
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
+      inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         uri: configService.get<string>('MONGO_URI'),
+        // Opcional: mejoras para compatibilidad
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
       }),
-      inject: [ConfigService],
     }),
-      MongooseModule.forFeature([{ name: TUsuario.name, schema: TUsuarioSchema }]),
-      MongooseModule.forFeature([{ name: TEvaluacion.name, schema: TEvaluacionSchema }]),
-      MongooseModule.forFeature([{ name: TPostulante.name, schema: TPostulanteSchema }]),
+    MongooseModule.forFeature([
+      { name: TUsuario.name, schema: TUsuarioSchema },
+      { name: TEvaluacion.name, schema: TEvaluacionSchema },
+      { name: TPostulante.name, schema: TPostulanteSchema },
+    ]),
   ],
   controllers: [AppController, MascotasController, AdopcionesController],
-  providers: [AppService, 
-    ...SERVICIOS
-  ],
+  providers: [AppService, ...SERVICIOS],
 })
 export class AppModule {}
