@@ -49,25 +49,25 @@ let TEvaluacionService = class TEvaluacionService {
     findAll() {
         return this.tevaluacionModel.find();
     }
-    async generateGeminiCompletion(prompt) {
+    async generateGeminiCompletion(prompt, schema) {
         try {
             const GEMINI_API_KEY = process.env.GEMINIKEY;
             const genAI = new generative_ai_1.GoogleGenerativeAI(GEMINI_API_KEY);
             const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-            const result = await model.generateContent({
-                contents: [{ role: "user", parts: [{ text: prompt }] }],
-                generationConfig: {
-                    temperature: 0.4,
-                },
-            });
-            const response = await result.response;
-            const text = response.text();
-            const respuestaFinal = { "RespuestaModelo": text };
-            return respuestaFinal;
+            const generationConfig = {
+                temperature: 0.4
+            };
+            if (schema) {
+                generationConfig.responseMimeType = "application/json";
+                generationConfig.responseSchema = schema;
+            }
+            const contents = [{ role: 'user', parts: [{ text: prompt }] }];
+            const result = await model.generateContent({ contents: contents }, { config: generationConfig });
+            return result.response.text();
         }
         catch (error) {
             console.error("Error al llamar a Gemini:", error);
-            return null;
+            throw new Error("Fallo en la generación de contenido de Gemini.");
         }
     }
     create(data) {
@@ -79,16 +79,47 @@ let TEvaluacionService = class TEvaluacionService {
     }
     async evaluateResumeCHATGPT(content, keywords) {
         let prompt = `
-    Evalúa el siguiente texto de varias hojas de vidas y compáralas con estas palabras clave: ${keywords.join(', ')}.
-    Usa análisis semántico (sinónimos, contexto, etc.) y devuelve un JSON con:
-    {
-      "postulante":"Nombres completos"
-      "score": 0-100,
-      "explanation": "por qué consideras que esta hoja de vida es relevante"
-    }
+    Eres un experto evaluador de currículums.
+    Evalúa los siguientes textos de hojas de vida y compáralos con estas palabras clave: ${keywords.join(', ')}.
+    Usa análisis semántico (sinónimos, contexto, experiencia, etc.) para asignar una puntuación.
+
+    LA ÚNICA RESPUESTA que debes generar es un ARRAY DE OBJETOS JSON.
+    NO incluyas ningún texto introductorio, explicaciones, formateo de Markdown (como \`\`\`json), ni cualquier otro carácter fuera del ARRAY JSON.
+
+    Estructura Requerida (Sigue ESTA plantilla al pie de la letra):
+    [
+      {
+        "postulante": "Nombres completos del candidato",
+        "score": 0-100,
+        "explanation": "Justificación clara y concisa de la puntuación y la relevancia de su perfil."
+      }
+    ]
+    
+    Hoja(s) de Vida a Evaluar:
     ${content}
-    `;
-        return await this.generateGeminiCompletion(prompt);
+  `;
+        const evaluationSchema = {
+            type: "array",
+            items: {
+                type: "object",
+                properties: {
+                    postulante: { type: "string", description: "Nombres completos del postulante." },
+                    score: { type: "integer", description: "Puntuación de 0 a 100 basada en la relevancia de las palabras clave." },
+                    explanation: { type: "string", description: "Justificación detallada de por qué se asignó esa puntuación." }
+                },
+                required: ["postulante", "score", "explanation"]
+            }
+        };
+        try {
+            const responseText = await this.generateGeminiCompletion(prompt, evaluationSchema);
+            console.log(responseText);
+            const respuestaFinal = "" + { "RespuestaModelo": responseText.trim() };
+            return JSON.parse(respuestaFinal);
+        }
+        catch (error) {
+            console.error('Error en evaluateResumeCHATGPT:', error);
+            throw new Error('Error evaluando hoja de vida con Gemini');
+        }
     }
     ObtenerContenido(content, numero) {
         try {

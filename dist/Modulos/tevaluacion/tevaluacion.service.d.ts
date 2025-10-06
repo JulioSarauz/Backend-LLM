@@ -14,9 +14,7 @@ export declare class TEvaluacionService {
     }> & {
         __v: number;
     }, {}, TEvaluacion, "find", {}>;
-    generateGeminiCompletion(prompt: any): Promise<{
-        RespuestaModelo: string;
-    } | null>;
+    generateGeminiCompletion(prompt: string, schema?: any): Promise<string>;
     create(data: Partial<TEvaluacion>): Promise<import("mongoose").Document<unknown, {}, TEvaluacion, {}> & TEvaluacion & Required<{
         _id: unknown;
     }> & {
@@ -31,9 +29,7 @@ export declare class TEvaluacionService {
     }> & {
         __v: number;
     }, {}, TEvaluacion, "findOneAndUpdate", {}>;
-    evaluateResumeCHATGPT(content: string, keywords: string[]): Promise<{
-        RespuestaModelo: string;
-    } | null>;
+    evaluateResumeCHATGPT(content: string, keywords: string[]): Promise<any>;
     ObtenerContenido(content: string, numero: number): string;
     reprocesarTexto(raw: string): string;
 }

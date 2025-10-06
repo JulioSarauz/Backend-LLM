@@ -25,7 +25,5 @@ export declare class EvaluacionController {
     }> & {
         __v: number;
     }, {}, import("./tevaluacion.schema").TEvaluacion, "findOneAndUpdate", {}>;
-    upload(files: Express.Multer.File[], body: any): Promise<{
-        RespuestaModelo: string;
-    } | null>;
+    upload(files: Express.Multer.File[], body: any): Promise<any>;
 }
