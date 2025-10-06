@@ -62,8 +62,8 @@ let TEvaluacionService = class TEvaluacionService {
             });
             const response = await result.response;
             const text = response.text();
-            console.log(text);
-            return text;
+            const respuestaFinal = { "RespuestaModelo": text };
+            return respuestaFinal;
         }
         catch (error) {
             console.error("Error al llamar a Gemini:", error);
