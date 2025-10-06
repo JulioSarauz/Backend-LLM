@@ -29,7 +29,7 @@ export declare class TEvaluacionService {
     }> & {
         __v: number;
     }, {}, TEvaluacion, "findOneAndUpdate", {}>;
-    evaluateResumeCHATGPT(content: string, keywords: string[]): Promise<any>;
+    evaluateResumeCHATGPT(content: string, keywords: string[]): Promise<string | null>;
     ObtenerContenido(content: string, numero: number): string;
     reprocesarTexto(raw: string): string;
 }

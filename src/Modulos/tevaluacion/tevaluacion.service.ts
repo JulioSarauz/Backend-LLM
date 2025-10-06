@@ -3,7 +3,6 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TEvaluacion } from './tevaluacion.schema';
-import * as pdfParse from 'pdf-parse';
 import OpenAI from 'openai';
 import { stopwordsEN } from './stopwords/stopEn';
 // Importa la librería necesaria
@@ -11,39 +10,37 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 @Injectable()
 export class TEvaluacionService {
-  private readonly openai: OpenAI; 
+  private readonly openai: OpenAI;
 
-  
+
   constructor(
     @InjectModel(TEvaluacion.name) private tevaluacionModel: Model<TEvaluacion>
   ) {
-     this.openai = new OpenAI({
+    this.openai = new OpenAI({
     })
     console.log(process.env.OPENAI_API_KEY);
-    // Ejemplo de uso
     this.validarClave(process.env.OPENAI_API_KEY!).then((esValida) => {
       console.log(esValida ? '✅ API Key válida' : '❌ API Key inválida');
-});
+    });
 
   }
 
 
   async validarClave(apiKey: string): Promise<boolean> {
-  const openai = new OpenAI({ apiKey });
+    const openai = new OpenAI({ apiKey });
 
-  try {
-    // Llamada mínima para validar la clave
-    const models = await openai.models.list();
-    return models.data.length > 0; // si devuelve modelos, la clave es válida
-  } catch (error: any) {
-    if (error.status === 401 || error.code === 'invalid_api_key') {
-      console.error('❌ Clave inválida');
+    try {
+      const models = await openai.models.list();
+      return models.data.length > 0;
+    } catch (error: any) {
+      if (error.status === 401 || error.code === 'invalid_api_key') {
+        console.error('❌ Clave inválida');
+        return false;
+      }
+      console.error('⚠️ Error inesperado:', error);
       return false;
     }
-    console.error('⚠️ Error inesperado:', error);
-    return false;
   }
-}
 
 
   findAll() {
@@ -52,33 +49,25 @@ export class TEvaluacionService {
 
 
   async generateGeminiCompletion(prompt) {
-  try {
-        const GEMINI_API_KEY:any = process.env.GEMINIKEY; // Ejemplo
-
-    // Inicializa el cliente
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-
-    // Elige el modelo a usar
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    // Genera el contenido con el prompt y la temperatura deseada
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.4,
-      },
-    });
-
-    // Extrae la respuesta de texto del resultado
-    const response = await result.response;
-    const text = response.text();
-
-    console.log(text);
-    return text;
-  } catch (error) {
-    console.error("Error al llamar a Gemini:", error);
-    return null;
+    try {
+      const GEMINI_API_KEY: any = process.env.GEMINIKEY;
+      const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.4,
+        },
+      });
+      const response = await result.response;
+      const text = response.text();
+      console.log(text);
+      return text;
+    } catch (error) {
+      console.error("Error al llamar a Gemini:", error);
+      return null;
+    }
   }
-}
 
 
 
@@ -97,11 +86,7 @@ export class TEvaluacionService {
   async evaluateResumeCHATGPT(
     content: string,
     keywords: string[],
-  ){
-
-
-
-
+  ) {
     let prompt = `
     Evalúa el siguiente texto de varias hojas de vidas y compáralas con estas palabras clave: ${keywords.join(', ')}.
     Usa análisis semántico (sinónimos, contexto, etc.) y devuelve un JSON con:
@@ -112,39 +97,36 @@ export class TEvaluacionService {
     }
     ${content}
     `;
-
-    
     return await this.generateGeminiCompletion(prompt);
-    const maxChars = 3000;
-    prompt = prompt.length > maxChars ? prompt.slice(0, maxChars) : prompt;
-    console.log(prompt);
-    console.log(prompt.length);
-    
-    try {
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',//'gpt-4.1',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.4,
-      });
+    // const maxChars = 3000;
+    // prompt = prompt.length > maxChars ? prompt.slice(0, maxChars) : prompt;
+    // console.log(prompt);
+    // console.log(prompt.length);
 
-      if (!completion.choices || completion.choices.length === 0) {
-        throw new Error('Respuesta vacía del modelo OpenAI');
-      }
+    // try {
+    //   const completion = await this.openai.chat.completions.create({
+    //     model: 'gpt-3.5-turbo',//'gpt-4.1',
+    //     messages: [{ role: 'user', content: prompt }],
+    //     temperature: 0.4,
+    //   });
 
-      const response = completion.choices[0].message?.content || '{}';
-      return JSON.parse(response);
-    } catch (error) {
-      console.error('Error en evaluateResumeCHATGPT:', error);
-      throw new InternalServerErrorException('Error evaluando hoja de vida con ChatGPT');
-    }
-  
+    //   if (!completion.choices || completion.choices.length === 0) {
+    //     throw new Error('Respuesta vacía del modelo OpenAI');
+    //   }
+
+    //   const response = completion.choices[0].message?.content || '{}';
+    //   return JSON.parse(response);
+    // } catch (error) {
+    //   console.error('Error en evaluateResumeCHATGPT:', error);
+    //   throw new InternalServerErrorException('Error evaluando hoja de vida con ChatGPT');
+    // }
   }
 
-  ObtenerContenido(content: string, numero:number){
-    try{
+  ObtenerContenido(content: string, numero: number) {
+    try {
       content = this.reprocesarTexto(content);
-      return 'Hoja de vida '+numero+ ': '+content;
-    }catch(e){
+      return 'Hoja de vida ' + numero + ': ' + content;
+    } catch (e) {
       return '';
     }
   }

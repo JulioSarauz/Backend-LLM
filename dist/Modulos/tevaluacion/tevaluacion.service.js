@@ -53,7 +53,7 @@ let TEvaluacionService = class TEvaluacionService {
         try {
             const GEMINI_API_KEY = process.env.GEMINIKEY;
             const genAI = new generative_ai_1.GoogleGenerativeAI(GEMINI_API_KEY);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
             const result = await model.generateContent({
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
                 generationConfig: {
@@ -89,26 +89,6 @@ let TEvaluacionService = class TEvaluacionService {
     ${content}
     `;
         return await this.generateGeminiCompletion(prompt);
-        const maxChars = 3000;
-        prompt = prompt.length > maxChars ? prompt.slice(0, maxChars) : prompt;
-        console.log(prompt);
-        console.log(prompt.length);
-        try {
-            const completion = await this.openai.chat.completions.create({
-                model: 'gpt-3.5-turbo',
-                messages: [{ role: 'user', content: prompt }],
-                temperature: 0.4,
-            });
-            if (!completion.choices || completion.choices.length === 0) {
-                throw new Error('Respuesta vacía del modelo OpenAI');
-            }
-            const response = completion.choices[0].message?.content || '{}';
-            return JSON.parse(response);
-        }
-        catch (error) {
-            console.error('Error en evaluateResumeCHATGPT:', error);
-            throw new common_1.InternalServerErrorException('Error evaluando hoja de vida con ChatGPT');
-        }
     }
     ObtenerContenido(content, numero) {
         try {
