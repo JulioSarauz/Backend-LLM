@@ -17,34 +17,12 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const tevaluacion_schema_1 = require("./tevaluacion.schema");
-const openai_1 = require("openai");
 const stopEn_1 = require("./stopwords/stopEn");
 const generative_ai_1 = require("@google/generative-ai");
 let TEvaluacionService = class TEvaluacionService {
     tevaluacionModel;
-    openai;
     constructor(tevaluacionModel) {
         this.tevaluacionModel = tevaluacionModel;
-        this.openai = new openai_1.default({});
-        console.log(process.env.OPENAI_API_KEY);
-        this.validarClave(process.env.OPENAI_API_KEY).then((esValida) => {
-            console.log(esValida ? '✅ API Key válida' : '❌ API Key inválida');
-        });
-    }
-    async validarClave(apiKey) {
-        const openai = new openai_1.default({ apiKey });
-        try {
-            const models = await openai.models.list();
-            return models.data.length > 0;
-        }
-        catch (error) {
-            if (error.status === 401 || error.code === 'invalid_api_key') {
-                console.error('❌ Clave inválida');
-                return false;
-            }
-            console.error('⚠️ Error inesperado:', error);
-            return false;
-        }
     }
     findAll() {
         return this.tevaluacionModel.find();
@@ -66,7 +44,6 @@ let TEvaluacionService = class TEvaluacionService {
             return result.response.text();
         }
         catch (error) {
-            console.error("Error al llamar a Gemini:", error);
             throw new Error("Fallo en la generación de contenido de Gemini.");
         }
     }
@@ -78,26 +55,26 @@ let TEvaluacionService = class TEvaluacionService {
         return this.tevaluacionModel.findByIdAndUpdate(id, { estado }, { new: true });
     }
     async evaluateResumeCHATGPT(content, keywords) {
-        let prompt = `
-    Eres un experto evaluador de currículums.
-    Evalúa los siguientes textos de hojas de vida y compáralos con estas palabras clave: ${keywords.join(', ')}.
-    Usa análisis semántico (sinónimos, contexto, experiencia, etc.) para asignar una puntuación.
+        const prompt = `
+      Eres un experto evaluador de currículums.
+      Evalúa los siguientes textos de hojas de vida y compáralos con estas palabras clave: ${keywords.join(', ')}.
+      Usa análisis semántico (sinónimos, contexto, experiencia, etc.) para asignar una puntuación.
 
-    LA ÚNICA RESPUESTA que debes generar es un ARRAY DE OBJETOS JSON.
-    NO incluyas ningún texto introductorio, explicaciones, formateo de Markdown (como \`\`\`json), ni cualquier otro carácter fuera del ARRAY JSON.
+      LA ÚNICA RESPUESTA que debes generar es un ARRAY DE OBJETOS JSON.
+      NO incluyas ningún texto introductorio, explicaciones, formateo de Markdown (como \`\`\`json), ni cualquier otro carácter fuera del ARRAY JSON.
 
-    Estructura Requerida (Sigue ESTA plantilla al pie de la letra):
-    [
-      {
-        "postulante": "Nombres completos del candidato",
-        "score": 0-100,
-        "explanation": "Justificación clara y concisa de la puntuación y la relevancia de su perfil."
-      }
-    ]
-    
-    Hoja(s) de Vida a Evaluar:
-    ${content}
-  `;
+      Estructura Requerida (Sigue ESTA plantilla al pie de la letra):
+      [
+        {
+          "postulante": "Nombres completos del candidato",
+          "score": 0-100,
+          "explanation": "Justificación clara y concisa de la puntuación y la relevancia de su perfil."
+        }
+      ]
+      
+      Hoja(s) de Vida a Evaluar:
+      ${content}
+    `;
         const evaluationSchema = {
             type: "array",
             items: {
@@ -112,12 +89,10 @@ let TEvaluacionService = class TEvaluacionService {
         };
         try {
             const responseText = await this.generateGeminiCompletion(prompt, evaluationSchema);
-            console.log(responseText);
-            const respuestaFinal = "" + { "RespuestaModelo": responseText.trim() };
-            return JSON.parse(respuestaFinal);
+            const transformado = JSON.parse(responseText.trim());
+            return { "RespuestaModelo": transformado };
         }
         catch (error) {
-            console.error('Error en evaluateResumeCHATGPT:', error);
             throw new Error('Error evaluando hoja de vida con Gemini');
         }
     }
@@ -131,7 +106,7 @@ let TEvaluacionService = class TEvaluacionService {
         }
     }
     reprocesarTexto(raw) {
-        let stopwords = require('stopwords-es');
+        const stopwords = require('stopwords-es');
         stopwords.concat(stopEn_1.stopwordsEN);
         let texto = raw.toLowerCase();
         texto = texto.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/g, ' ');
