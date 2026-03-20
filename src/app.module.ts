@@ -19,9 +19,7 @@ import { UsuarioController } from './Modulos/tusuario/tusuario.controller';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         uri: configService.get<string>('MONGO_URI'),
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      }),
+      })
     }),
     MongooseModule.forFeature([
       { name: TUsuario.name, schema: TUsuarioSchema },

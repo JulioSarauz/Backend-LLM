@@ -31,9 +31,7 @@ exports.AppModule = AppModule = __decorate([
                 inject: [config_1.ConfigService],
                 useFactory: async (configService) => ({
                     uri: configService.get('MONGO_URI'),
-                    useNewUrlParser: true,
-                    useUnifiedTopology: true,
-                }),
+                })
             }),
             mongoose_1.MongooseModule.forFeature([
                 { name: tusuario_schema_1.TUsuario.name, schema: tusuario_schema_1.TUsuarioSchema },
