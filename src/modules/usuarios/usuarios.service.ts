@@ -30,7 +30,7 @@ export class UsuariosService {
     ).exec();
 
     if (!updatedUser) {
-      throw new NotFoundException('Usuario no encontrado');
+      throw new NotFoundException('Usuario no encontrado'); 
     }
     return updatedUser;
   }
