@@ -5,12 +5,12 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const port = process.env.PORT || 3000;
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   app.enableCors();
   const config = new DocumentBuilder()
     .setTitle('Backend-LLM')
-    .setDescription('Documentación de los endpoints de la aplicación que sirven para la seleccion con IA de los postulantes de la Cooperativa de Ahorro y Crédito 29 de octubre LTDA.')
+    .setDescription('Documentación de los endpoints de la aplicación que sirven para la seleccion con IA de los postulantes')
     .setVersion('1.0')
     .addBearerAuth(
         { type: 'http', scheme: 'bearer', bearerFormat: 'JWT', in: 'header' },
@@ -24,3 +24,4 @@ async function bootstrap() {
   await app.listen(port, '0.0.0.0');
 }
 bootstrap();
+
