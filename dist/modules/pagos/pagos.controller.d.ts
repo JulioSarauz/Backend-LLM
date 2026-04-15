@@ -1,14 +1,14 @@
-import { RawBodyRequest } from '@nestjs/common';
 import { PagosService } from './pagos.service';
-import { Request } from 'express';
-import { CrearCheckoutDto } from './dto/crear-checkout.dto';
+import { CrearOrdenDto } from './dto/crear-orden.dto';
 export declare class PagosController {
     private readonly pagosService;
     constructor(pagosService: PagosService);
-    crearCheckout(req: any, body: CrearCheckoutDto): Promise<{
-        url: string | null;
+    crearOrden(req: any, crearOrdenDto: CrearOrdenDto): Promise<{
+        orderId: any;
+        links: any;
     }>;
-    manejarWebhook(req: RawBodyRequest<Request>, signature: string): Promise<{
-        received: boolean;
+    capturarOrden(orderId: string): Promise<{
+        success: boolean;
+        message: string;
     }>;
 }

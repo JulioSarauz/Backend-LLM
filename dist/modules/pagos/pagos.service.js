@@ -16,92 +16,51 @@ exports.PagosService = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
-const stripe_1 = require("stripe");
-const pago_schema_1 = require("./schemas/pago.schema");
-const usuarios_service_1 = require("../usuarios/usuarios.service");
+const paypal_service_1 = require("./paypal.service");
+const transaccion_schema_1 = require("./schemas/transaccion.schema");
 let PagosService = class PagosService {
-    pagoModel;
-    usuariosService;
-    stripe;
-    planes = {
-        'Basico': { precio: 499, tokens: 20 },
-        'Profesional': { precio: 1499, tokens: 100 },
-        'Corporativo': { precio: 4999, tokens: 500 },
-    };
-    constructor(pagoModel, usuariosService) {
-        this.pagoModel = pagoModel;
-        this.usuariosService = usuariosService;
-        this.stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY, {
-            apiVersion: '2026-03-25.dahlia',
-        });
+    paypalService;
+    transaccionModel;
+    constructor(paypalService, transaccionModel) {
+        this.paypalService = paypalService;
+        this.transaccionModel = transaccionModel;
     }
-    async crearSesionCheckout(userId, email, planName) {
-        const planElegido = this.planes[planName];
-        if (!planElegido) {
-            throw new common_1.BadRequestException('Plan inválido');
-        }
-        const session = await this.stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            customer_email: email,
-            line_items: [
-                {
-                    price_data: {
-                        currency: 'usd',
-                        product_data: {
-                            name: `Plan ${planName} - ResumeAnalyzer IA`,
-                            description: `Recarga de ${planElegido.tokens} tokens`,
-                        },
-                        unit_amount: planElegido.precio,
-                    },
-                    quantity: 1,
-                },
-            ],
-            mode: 'payment',
-            success_url: `${process.env.FRONTEND_URL}/dashboard?pago=exitoso`,
-            cancel_url: `${process.env.FRONTEND_URL}/dashboard?pago=cancelado`,
-            metadata: {
-                userId: userId,
-                planName: planName,
-                tokens: planElegido.tokens.toString(),
-            },
+    async crearOrden(dto) {
+        const paypalOrder = await this.paypalService.createOrder(dto.monto);
+        const nuevaTransaccion = new this.transaccionModel({
+            usuarioId: dto.usuarioId,
+            paypalOrderId: paypalOrder.id,
+            monto: dto.monto,
+            tokensAdquiridos: dto.tokens,
+            estado: 'PENDING',
         });
-        await new this.pagoModel({
-            sessionId: session.id,
-            usuarioId: userId,
-            plan: planName,
-            monto: planElegido.precio / 100,
-            estado: 'Pendiente',
-        }).save();
-        return { url: session.url };
+        return await nuevaTransaccion.save().then(t => ({
+            orderId: paypalOrder.id,
+            links: paypalOrder.links
+        }));
     }
-    async manejarWebhook(req, signature) {
-        if (!req.rawBody) {
-            throw new common_1.BadRequestException('No se recibió el cuerpo de la petición (rawBody)');
+    async capturarOrden(orderId) {
+        const transaccion = await this.transaccionModel.findOne({ paypalOrderId: orderId });
+        if (!transaccion)
+            throw new common_1.NotFoundException('Transacción no encontrada');
+        if (transaccion.estado === 'COMPLETED')
+            throw new common_1.BadRequestException('Esta orden ya fue procesada');
+        const captureResult = await this.paypalService.capturePayment(orderId);
+        if (captureResult.status === 'COMPLETED') {
+            transaccion.estado = 'COMPLETED';
+            await transaccion.save();
+            return { success: true, message: 'Pago completado y tokens acreditados' };
         }
-        let event;
-        try {
-            event = this.stripe.webhooks.constructEvent(req.rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET);
-        }
-        catch (err) {
-            throw new common_1.BadRequestException(`Webhook Error: ${err.message}`);
-        }
-        if (event.type === 'checkout.session.completed') {
-            const session = event.data.object;
-            if (!session.metadata) {
-                return { received: true };
-            }
-            const { userId, planName, tokens } = session.metadata;
-            await this.pagoModel.findOneAndUpdate({ sessionId: session.id }, { estado: 'Completado' }).exec();
-            await this.usuariosService.updateTokens(userId, parseInt(tokens), planName);
-        }
-        return { received: true };
+        transaccion.estado = 'FAILED';
+        await transaccion.save();
+        throw new common_1.BadRequestException('El pago no se pudo completar en PayPal');
     }
 };
 exports.PagosService = PagosService;
 exports.PagosService = PagosService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, mongoose_1.InjectModel)(pago_schema_1.Pago.name)),
-    __metadata("design:paramtypes", [mongoose_2.Model,
-        usuarios_service_1.UsuariosService])
+    __param(1, (0, mongoose_1.InjectModel)(transaccion_schema_1.Transaccion.name)),
+    __metadata("design:paramtypes", [paypal_service_1.PaypalService,
+        mongoose_2.Model])
 ], PagosService);
 //# sourceMappingURL=pagos.service.js.map

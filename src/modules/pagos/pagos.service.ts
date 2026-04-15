@@ -1,107 +1,54 @@
-import { Injectable, BadRequestException, RawBodyRequest } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import Stripe from 'stripe';
-import { Request } from 'express';
-import { Pago } from './schemas/pago.schema';
-import { UsuariosService } from '../usuarios/usuarios.service';
+import { PaypalService } from './paypal.service';
+import { Transaccion, TransaccionDocument } from './schemas/transaccion.schema';
+import { CrearOrdenDto } from './dto/crear-orden.dto';
 
 @Injectable()
 export class PagosService {
-  private stripe: Stripe;
-
-  private readonly planes = {
-    'Basico': { precio: 499, tokens: 20 },
-    'Profesional': { precio: 1499, tokens: 100 },
-    'Corporativo': { precio: 4999, tokens: 500 },
-  };
-
   constructor(
-    @InjectModel(Pago.name) private pagoModel: Model<Pago>,
-    private usuariosService: UsuariosService
-  ) {
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-      apiVersion: '2026-03-25.dahlia',
-    });
-  }
+    private readonly paypalService: PaypalService,
+    @InjectModel(Transaccion.name) private transaccionModel: Model<TransaccionDocument>,
+  ) {}
 
-  async crearSesionCheckout(userId: string, email: string, planName: string) {
-    const planElegido = this.planes[planName];
-    if (!planElegido) {
-      throw new BadRequestException('Plan inválido');
+async crearOrden(dto: CrearOrdenDto) { // dto ahora ya trae el usuarioId correcto desde el controller
+  const paypalOrder = await this.paypalService.createOrder(dto.monto);
+
+  const nuevaTransaccion = new this.transaccionModel({
+    usuarioId: dto.usuarioId, // Este ya es el ID real del usuario
+    paypalOrderId: paypalOrder.id,
+    monto: dto.monto,
+    tokensAdquiridos: dto.tokens,
+    estado: 'PENDING',
+  });
+  return await nuevaTransaccion.save().then(t => ({
+    orderId: paypalOrder.id,
+    links: paypalOrder.links
+  }));
+}
+
+  async capturarOrden(orderId: string) {
+    const transaccion = await this.transaccionModel.findOne({ paypalOrderId: orderId });
+    if (!transaccion) throw new NotFoundException('Transacción no encontrada');
+    if (transaccion.estado === 'COMPLETED') throw new BadRequestException('Esta orden ya fue procesada');
+
+    const captureResult = await this.paypalService.capturePayment(orderId);
+
+    if (captureResult.status === 'COMPLETED') {
+      transaccion.estado = 'COMPLETED';
+      await transaccion.save();
+
+      // TODO: Una vez que confirmes la ruta de tu módulo de usuarios, 
+      // inyecta el modelo Usuario en el constructor y actualiza los tokens aquí.
+      // Ejemplo:
+      // await this.usuarioModel.findByIdAndUpdate(transaccion.usuarioId, { $inc: { tokens: transaccion.tokensAdquiridos } });
+
+      return { success: true, message: 'Pago completado y tokens acreditados' };
     }
 
-    const session = await this.stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      customer_email: email,
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: `Plan ${planName} - ResumeAnalyzer IA`,
-              description: `Recarga de ${planElegido.tokens} tokens`,
-            },
-            unit_amount: planElegido.precio,
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: `${process.env.FRONTEND_URL}/dashboard?pago=exitoso`,
-      cancel_url: `${process.env.FRONTEND_URL}/dashboard?pago=cancelado`,
-      metadata: {
-        userId: userId,
-        planName: planName,
-        tokens: planElegido.tokens.toString(),
-      },
-    });
-
-    await new this.pagoModel({
-      sessionId: session.id,
-      usuarioId: userId,
-      plan: planName,
-      monto: planElegido.precio / 100,
-      estado: 'Pendiente',
-    }).save();
-
-    return { url: session.url };
-  }
-
-  async manejarWebhook(req: RawBodyRequest<Request>, signature: string) {
-    if (!req.rawBody) {
-      throw new BadRequestException('No se recibió el cuerpo de la petición (rawBody)');
-    }
-
-    let event: Stripe.Event;
-
-    try {
-      event = this.stripe.webhooks.constructEvent(
-        req.rawBody,
-        signature,
-        process.env.STRIPE_WEBHOOK_SECRET as string
-      );
-    } catch (err: any) {
-      throw new BadRequestException(`Webhook Error: ${err.message}`);
-    }
-
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      
-      if (!session.metadata) {
-        return { received: true };
-      }
-
-      const { userId, planName, tokens } = session.metadata;
-
-      await this.pagoModel.findOneAndUpdate(
-        { sessionId: session.id },
-        { estado: 'Completado' }
-      ).exec();
-
-      await this.usuariosService.updateTokens(userId, parseInt(tokens), planName);
-    }
-
-    return { received: true };
+    transaccion.estado = 'FAILED';
+    await transaccion.save();
+    throw new BadRequestException('El pago no se pudo completar en PayPal');
   }
 }

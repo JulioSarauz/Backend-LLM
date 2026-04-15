@@ -1,18 +1,17 @@
-import { RawBodyRequest } from '@nestjs/common';
 import { Model } from 'mongoose';
-import { Request } from 'express';
-import { Pago } from './schemas/pago.schema';
-import { UsuariosService } from '../usuarios/usuarios.service';
+import { PaypalService } from './paypal.service';
+import { TransaccionDocument } from './schemas/transaccion.schema';
+import { CrearOrdenDto } from './dto/crear-orden.dto';
 export declare class PagosService {
-    private pagoModel;
-    private usuariosService;
-    private stripe;
-    private readonly planes;
-    constructor(pagoModel: Model<Pago>, usuariosService: UsuariosService);
-    crearSesionCheckout(userId: string, email: string, planName: string): Promise<{
-        url: string | null;
+    private readonly paypalService;
+    private transaccionModel;
+    constructor(paypalService: PaypalService, transaccionModel: Model<TransaccionDocument>);
+    crearOrden(dto: CrearOrdenDto): Promise<{
+        orderId: any;
+        links: any;
     }>;
-    manejarWebhook(req: RawBodyRequest<Request>, signature: string): Promise<{
-        received: boolean;
+    capturarOrden(orderId: string): Promise<{
+        success: boolean;
+        message: string;
     }>;
 }

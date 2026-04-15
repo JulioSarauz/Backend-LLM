@@ -15,45 +15,49 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PagosController = void 0;
 const common_1 = require("@nestjs/common");
 const pagos_service_1 = require("./pagos.service");
-const passport_1 = require("@nestjs/passport");
+const crear_orden_dto_1 = require("./dto/crear-orden.dto");
 const swagger_1 = require("@nestjs/swagger");
-const crear_checkout_dto_1 = require("./dto/crear-checkout.dto");
+const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 let PagosController = class PagosController {
     pagosService;
     constructor(pagosService) {
         this.pagosService = pagosService;
     }
-    crearCheckout(req, body) {
-        return this.pagosService.crearSesionCheckout(req.user.userId, req.user.email, body.plan);
+    crearOrden(req, crearOrdenDto) {
+        const userId = req.user.userId;
+        return this.pagosService.crearOrden({
+            ...crearOrdenDto,
+            usuarioId: userId
+        });
     }
-    manejarWebhook(req, signature) {
-        return this.pagosService.manejarWebhook(req, signature);
+    capturarOrden(orderId) {
+        return this.pagosService.capturarOrden(orderId);
     }
 };
 exports.PagosController = PagosController;
 __decorate([
-    (0, common_1.Post)('checkout'),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
-    (0, swagger_1.ApiOperation)({ summary: 'Genera el link de pago de Stripe para un plan.' }),
-    (0, swagger_1.ApiBody)({ type: crear_checkout_dto_1.CrearCheckoutDto }),
+    (0, common_1.Post)('crear-orden'),
+    (0, swagger_1.ApiOperation)({ summary: 'Crea una orden de pago en PayPal para adquirir tokens.' }),
+    (0, swagger_1.ApiBody)({ type: crear_orden_dto_1.CrearOrdenDto }),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, crear_checkout_dto_1.CrearCheckoutDto]),
+    __metadata("design:paramtypes", [Object, crear_orden_dto_1.CrearOrdenDto]),
     __metadata("design:returntype", void 0)
-], PagosController.prototype, "crearCheckout", null);
+], PagosController.prototype, "crearOrden", null);
 __decorate([
-    (0, common_1.Post)('webhook'),
-    (0, swagger_1.ApiOperation)({ summary: 'Endpoint para recibir eventos automáticos de Stripe.' }),
-    __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Headers)('stripe-signature')),
+    (0, common_1.Post)('capturar-orden/:orderId'),
+    (0, swagger_1.ApiOperation)({ summary: 'Captura el pago en PayPal y acredita los tokens.' }),
+    (0, swagger_1.ApiParam)({ name: 'orderId' }),
+    __param(0, (0, common_1.Param)('orderId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], PagosController.prototype, "manejarWebhook", null);
+], PagosController.prototype, "capturarOrden", null);
 exports.PagosController = PagosController = __decorate([
     (0, swagger_1.ApiTags)('Pagos'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('pagos'),
     __metadata("design:paramtypes", [pagos_service_1.PagosService])
 ], PagosController);

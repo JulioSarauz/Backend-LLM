@@ -1,30 +1,32 @@
-import { Controller, Post, Body, Req, Headers, UseGuards, RawBodyRequest } from '@nestjs/common';
+import { Controller, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { PagosService } from './pagos.service';
-import { AuthGuard } from '@nestjs/passport';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
-import { Request } from 'express';
-import { CrearCheckoutDto } from './dto/crear-checkout.dto';
+import { CrearOrdenDto } from './dto/crear-orden.dto';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @ApiTags('Pagos')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('pagos')
 export class PagosController {
   constructor(private readonly pagosService: PagosService) {}
 
-  @Post('checkout')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Genera el link de pago de Stripe para un plan.' })
-  @ApiBody({ type: CrearCheckoutDto })
-  crearCheckout(@Req() req, @Body() body: CrearCheckoutDto) {
-    return this.pagosService.crearSesionCheckout(req.user.userId, req.user.email, body.plan);
+  @Post('crear-orden')
+  @ApiOperation({ summary: 'Crea una orden de pago en PayPal para adquirir tokens.' })
+  @ApiBody({ type: CrearOrdenDto })
+  crearOrden(@Req() req, @Body() crearOrdenDto: CrearOrdenDto) {
+    const userId = req.user.userId;
+    
+    return this.pagosService.crearOrden({
+      ...crearOrdenDto,
+      usuarioId: userId
+    });
   }
 
-  @Post('webhook')
-  @ApiOperation({ summary: 'Endpoint para recibir eventos automáticos de Stripe.' })
-  manejarWebhook(
-    @Req() req: RawBodyRequest<Request>,
-    @Headers('stripe-signature') signature: string,
-  ) {
-    return this.pagosService.manejarWebhook(req, signature);
+  @Post('capturar-orden/:orderId')
+  @ApiOperation({ summary: 'Captura el pago en PayPal y acredita los tokens.' })
+  @ApiParam({ name: 'orderId' })
+  capturarOrden(@Param('orderId') orderId: string) {
+    return this.pagosService.capturarOrden(orderId);
   }
 }

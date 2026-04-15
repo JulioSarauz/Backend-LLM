@@ -1,11 +1,10 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TEvaluacion } from './tevaluacion.schema';
 import { stopwordsEN } from './stopwords/stopEn';
 import { 
   GoogleGenerativeAI, 
-  GenerateContentRequest, 
   GenerationConfig 
 } from '@google/generative-ai';
 
@@ -37,10 +36,10 @@ export class TEvaluacionService {
 
         const contents = [{ role: 'user', parts: [{ text: prompt }] }];
         
-        const result = await model.generateContent(
-            { contents: contents }, 
-            { config: generationConfig } as any 
-        ); 
+        const result = await model.generateContent({
+            contents: contents,
+            generationConfig: generationConfig
+        }); 
 
         return result.response.text();
 
@@ -64,19 +63,15 @@ export class TEvaluacionService {
     const prompt = `
       Eres un experto evaluador de currículums.
       Evalúa los siguientes textos de hojas de vida y compáralos con estas palabras clave: ${keywords.join(', ')}.
-      Usa análisis semántico (sinónimos, contexto, experiencia, etc.) para asignar una puntuación.
+      
+      Debes extraer y calcular las siguientes métricas detalladas del candidato basándote en un análisis semántico estricto de su experiencia y conocimientos:
+      - score: Puntuación global de idoneidad (0-100)
+      - scoreTecnico: Puntuación específica de habilidades técnicas y herramientas (0-100)
+      - scoreExperiencia: Puntuación basada en los años y relevancia de su experiencia laboral (0-100)
+      - scoreBlando: Puntuación estimada de habilidades blandas, liderazgo o metodologías ágiles (0-100)
+      - heatmapData: Un análisis de 6 categorías exactas: 'Frontend', 'Backend', 'Arquitectura', 'Bases de Datos', 'DevOps', 'Agile'. Para cada categoría, genera un array 'cells' con exactamente 8 valores numéricos decimales (entre 0.05 y 1.0) que representen la intensidad, progresión o dominio histórico en sub-áreas de esa categoría.
 
-      LA ÚNICA RESPUESTA que debes generar es un ARRAY DE OBJETOS JSON.
-      NO incluyas ningún texto introductorio, explicaciones, formateo de Markdown (como \`\`\`json), ni cualquier otro carácter fuera del ARRAY JSON.
-
-      Estructura Requerida (Sigue ESTA plantilla al pie de la letra):
-      [
-        {
-          "postulante": "Nombres completos del candidato",
-          "score": 0-100,
-          "explanation": "Justificación clara y concisa de la puntuación y la relevancia de su perfil."
-        }
-      ]
+      LA ÚNICA RESPUESTA que debes generar es un ARRAY DE OBJETOS JSON siguiendo estrictamente el esquema provisto.
       
       Hoja(s) de Vida a Evaluar:
       ${content}
@@ -87,11 +82,28 @@ export class TEvaluacionService {
       items: {
         type: "object",
         properties: {
-          postulante: { type: "string", description: "Nombres completos del postulante." },
-          score: { type: "integer", description: "Puntuación de 0 a 100 basada en la relevancia de las palabras clave." },
-          explanation: { type: "string", description: "Justificación detallada de por qué se asignó esa puntuación." }
+          postulante: { type: "string" },
+          score: { type: "integer" },
+          scoreTecnico: { type: "integer" },
+          scoreExperiencia: { type: "integer" },
+          scoreBlando: { type: "integer" },
+          explanation: { type: "string" },
+          heatmapData: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                category: { type: "string" },
+                cells: {
+                  type: "array",
+                  items: { type: "number" }
+                }
+              },
+              required: ["category", "cells"]
+            }
+          }
         },
-        required: ["postulante", "score", "explanation"]
+        required: ["postulante", "score", "scoreTecnico", "scoreExperiencia", "scoreBlando", "explanation", "heatmapData"]
       }
     };
 
@@ -119,7 +131,7 @@ export class TEvaluacionService {
     let texto = raw.toLowerCase();
     texto = texto.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/g, ' ');
     const palabras = texto.split(/\s+/);
-    const palabrasFiltradas = palabras.filter(palabra => !stopwords.includes(palabra));
+    const palabrasFiltradas = palabras.filter((palabra: string) => !stopwords.includes(palabra));
     return palabrasFiltradas.join(' ');
   }
 }

@@ -2,15 +2,17 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PagosController } from './pagos.controller';
 import { PagosService } from './pagos.service';
-import { Pago, PagoSchema } from './schemas/pago.schema';
-import { UsuariosModule } from '../usuarios/usuarios.module';
+import { PaypalService } from './paypal.service';
+import { Transaccion, TransaccionSchema } from './schemas/transaccion.schema';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Pago.name, schema: PagoSchema }]),
-    UsuariosModule
+    MongooseModule.forFeature([{ name: Transaccion.name, schema: TransaccionSchema }]),
+    AuthModule,
   ],
   controllers: [PagosController],
-  providers: [PagosService]
+  providers: [PagosService, PaypalService],
+  exports: [PagosService],
 })
 export class PagosModule {}

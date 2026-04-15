@@ -11,19 +11,21 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const pagos_controller_1 = require("./pagos.controller");
 const pagos_service_1 = require("./pagos.service");
-const pago_schema_1 = require("./schemas/pago.schema");
-const usuarios_module_1 = require("../usuarios/usuarios.module");
+const paypal_service_1 = require("./paypal.service");
+const transaccion_schema_1 = require("./schemas/transaccion.schema");
+const auth_module_1 = require("../auth/auth.module");
 let PagosModule = class PagosModule {
 };
 exports.PagosModule = PagosModule;
 exports.PagosModule = PagosModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            mongoose_1.MongooseModule.forFeature([{ name: pago_schema_1.Pago.name, schema: pago_schema_1.PagoSchema }]),
-            usuarios_module_1.UsuariosModule
+            mongoose_1.MongooseModule.forFeature([{ name: transaccion_schema_1.Transaccion.name, schema: transaccion_schema_1.TransaccionSchema }]),
+            auth_module_1.AuthModule,
         ],
         controllers: [pagos_controller_1.PagosController],
-        providers: [pagos_service_1.PagosService]
+        providers: [pagos_service_1.PagosService, paypal_service_1.PaypalService],
+        exports: [pagos_service_1.PagosService],
     })
 ], PagosModule);
 //# sourceMappingURL=pagos.module.js.map
