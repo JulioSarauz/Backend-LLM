@@ -39,10 +39,4 @@ export declare class UsuariosService {
     }> & {
         __v: number;
     }) | null>;
-    register(registerDto: RegisterDto): Promise<{
-        message: string;
-        email: any;
-    }>;
-    verifyOtp(email: string, otp: string): Promise<any>;
-    login(loginDto: LoginDto): Promise<any>;
 }
