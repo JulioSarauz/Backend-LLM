@@ -7,7 +7,7 @@ import { TEvaluacion, TEvaluacionSchema } from './modules/evaluacion/tevaluacion
 import { TPostulante, TPostulanteSchema } from './modules/postulantes/tpostulantes.schema';
 import { SERVICIOS } from './common/constants/SERVICIOS';
 import { PostulantesController } from './modules/postulantes/tpostulantes.controller';
-import { EvaluacionController } from './modules/evaluacion/tevaluacion.controller';
+import { TEvaluacionController } from './modules/evaluacion/tevaluacion.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { SuscripcionesModule } from './modules/suscripciones/suscripciones.module';
@@ -33,7 +33,7 @@ import { PagosModule } from './modules/pagos/pagos.module';
     SuscripcionesModule,
     PagosModule
   ],
-  controllers: [AppController, PostulantesController, EvaluacionController],
+  controllers: [AppController, PostulantesController, TEvaluacionController],
   providers: [AppService, ...SERVICIOS],
 })
 export class AppModule {}

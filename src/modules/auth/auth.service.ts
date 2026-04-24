@@ -43,7 +43,7 @@ export class AuthService {
   }
 
   async validateOAuthLogin(profile: any) {
-    let user = await this.usuariosService.findByGoogleId(profile.googleId);
+    let user:any = await this.usuariosService.findByGoogleId(profile.googleId);
     if (!user) {
       user = await this.usuariosService.findByEmail(profile.email);
       if (user) {
@@ -70,6 +70,20 @@ export class AuthService {
         nombres: user.nombres,
         tokens: user.tokens
       }
+    };
+  }
+
+  async getUsuarioProfile(userId: string) {
+    const user = await this.usuariosService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('Usuario no encontrado');
+    }
+    return {
+      id: (user as any)._id,
+      email: user.email,
+      nombres: user.nombres,
+      tokens: user.tokens,
+      plan: user.plan
     };
   }
 }

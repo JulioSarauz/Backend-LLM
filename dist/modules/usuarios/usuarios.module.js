@@ -22,7 +22,7 @@ exports.UsuariosModule = UsuariosModule = __decorate([
         ],
         controllers: [tusuario_controller_1.UsuarioController],
         providers: [usuarios_service_1.UsuariosService],
-        exports: [usuarios_service_1.UsuariosService]
+        exports: [usuarios_service_1.UsuariosService, mongoose_1.MongooseModule]
     })
 ], UsuariosModule);
 //# sourceMappingURL=usuarios.module.js.map

@@ -1,34 +1,13 @@
 import { TEvaluacionService } from './tevaluacion.service';
-import { CreateEvaluacionDto, AprobarEvaluacionDto } from './dto/crear-evaluacion.dto';
-import { UsuariosService } from '../usuarios/usuarios.service';
-export declare class EvaluacionController {
+export declare class TEvaluacionController {
     private readonly tevaluacionService;
-    private readonly usuariosService;
-    constructor(tevaluacionService: TEvaluacionService, usuariosService: UsuariosService);
-    findAll(): import("mongoose").Query<(import("mongoose").Document<unknown, {}, import("./tevaluacion.schema").TEvaluacion, {}> & import("./tevaluacion.schema").TEvaluacion & Required<{
+    constructor(tevaluacionService: TEvaluacionService);
+    getHistorial(req: any): Promise<(import("mongoose").Document<unknown, {}, import("./tevaluacion.schema").TEvaluacionDocument, {}> & import("./tevaluacion.schema").TEvaluacion & import("mongoose").Document<unknown, any, any, Record<string, any>> & Required<{
         _id: unknown;
     }> & {
         __v: number;
-    })[], import("mongoose").Document<unknown, {}, import("./tevaluacion.schema").TEvaluacion, {}> & import("./tevaluacion.schema").TEvaluacion & Required<{
-        _id: unknown;
-    }> & {
-        __v: number;
-    }, {}, import("./tevaluacion.schema").TEvaluacion, "find", {}>;
-    create(body: CreateEvaluacionDto): Promise<import("mongoose").Document<unknown, {}, import("./tevaluacion.schema").TEvaluacion, {}> & import("./tevaluacion.schema").TEvaluacion & Required<{
-        _id: unknown;
-    }> & {
-        __v: number;
-    }>;
-    aprobar(id: string, body: AprobarEvaluacionDto): import("mongoose").Query<(import("mongoose").Document<unknown, {}, import("./tevaluacion.schema").TEvaluacion, {}> & import("./tevaluacion.schema").TEvaluacion & Required<{
-        _id: unknown;
-    }> & {
-        __v: number;
-    }) | null, import("mongoose").Document<unknown, {}, import("./tevaluacion.schema").TEvaluacion, {}> & import("./tevaluacion.schema").TEvaluacion & Required<{
-        _id: unknown;
-    }> & {
-        __v: number;
-    }, {}, import("./tevaluacion.schema").TEvaluacion, "findOneAndUpdate", {}>;
-    upload(req: any, files: Express.Multer.File[], body: any): Promise<{
+    })[]>;
+    evaluarCV(req: any, files: Express.Multer.File[], keywordsString: string): Promise<{
         RespuestaModelo: any;
     }>;
 }

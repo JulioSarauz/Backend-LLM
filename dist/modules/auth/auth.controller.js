@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const auth_service_1 = require("./auth.service");
 const auth_dto_1 = require("./dto/auth.dto");
 const passport_1 = require("@nestjs/passport");
+const jwt_auth_guard_1 = require("./jwt-auth.guard");
 let AuthController = class AuthController {
     authService;
     constructor(authService) {
@@ -28,12 +29,14 @@ let AuthController = class AuthController {
     login(loginDto) {
         return this.authService.login(loginDto);
     }
+    async getProfile(req) {
+        const userId = req.user.userId || req.user.id || req.user.sub;
+        return this.authService.getUsuarioProfile(userId);
+    }
     async googleAuth(req) { }
     async googleAuthRedirect(req, res) {
         const { access_token } = this.authService.generateToken(req.user);
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
-        console.log(frontendUrl);
-        console.log('redireccionadno a ');
         res.redirect(`${frontendUrl}/login?token=${access_token}`);
     }
 };
@@ -52,6 +55,14 @@ __decorate([
     __metadata("design:paramtypes", [auth_dto_1.LoginDto]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "login", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('profile'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "getProfile", null);
 __decorate([
     (0, common_1.Get)('google'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('google')),

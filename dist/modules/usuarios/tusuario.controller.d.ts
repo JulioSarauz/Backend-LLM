@@ -4,34 +4,34 @@ import { ActualizarUsuarioDto } from './dto/actualizar-usuario.dto';
 export declare class UsuarioController {
     private readonly usuarioService;
     constructor(usuarioService: UsuariosService);
-    findAll(): Promise<(import("mongoose").Document<unknown, {}, import("./schemas/usuario.schema").Usuario, {}> & import("./schemas/usuario.schema").Usuario & Required<{
-        _id: unknown;
-    }> & {
+    findAll(): Promise<(import("mongoose").Document<unknown, {}, import("./schemas/usuario.schema").Usuario, {}> & import("./schemas/usuario.schema").Usuario & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
         __v: number;
     })[]>;
-    findOne(id: string): Promise<(import("mongoose").Document<unknown, {}, import("./schemas/usuario.schema").Usuario, {}> & import("./schemas/usuario.schema").Usuario & Required<{
-        _id: unknown;
-    }> & {
+    findOne(id: string): Promise<(import("mongoose").Document<unknown, {}, import("./schemas/usuario.schema").Usuario, {}> & import("./schemas/usuario.schema").Usuario & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
         __v: number;
     }) | null>;
-    create(body: CrearUsuarioDto): Promise<import("mongoose").Document<unknown, {}, import("./schemas/usuario.schema").Usuario, {}> & import("./schemas/usuario.schema").Usuario & Required<{
-        _id: unknown;
-    }> & {
+    create(body: CrearUsuarioDto): Promise<import("mongoose").Document<unknown, {}, import("./schemas/usuario.schema").Usuario, {}> & import("./schemas/usuario.schema").Usuario & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
         __v: number;
     }>;
-    update(id: string, body: ActualizarUsuarioDto): Promise<(import("mongoose").Document<unknown, {}, import("./schemas/usuario.schema").Usuario, {}> & import("./schemas/usuario.schema").Usuario & Required<{
-        _id: unknown;
-    }> & {
+    update(id: string, body: ActualizarUsuarioDto): Promise<(import("mongoose").Document<unknown, {}, import("./schemas/usuario.schema").Usuario, {}> & import("./schemas/usuario.schema").Usuario & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
         __v: number;
     }) | null>;
-    aprobar(id: string, estado: string): Promise<(import("mongoose").Document<unknown, {}, import("./schemas/usuario.schema").Usuario, {}> & import("./schemas/usuario.schema").Usuario & Required<{
-        _id: unknown;
-    }> & {
+    aprobar(id: string, estado: string): Promise<(import("mongoose").Document<unknown, {}, import("./schemas/usuario.schema").Usuario, {}> & import("./schemas/usuario.schema").Usuario & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
         __v: number;
     }) | null>;
-    remove(id: string): Promise<(import("mongoose").Document<unknown, {}, import("./schemas/usuario.schema").Usuario, {}> & import("./schemas/usuario.schema").Usuario & Required<{
-        _id: unknown;
-    }> & {
+    remove(id: string): Promise<(import("mongoose").Document<unknown, {}, import("./schemas/usuario.schema").Usuario, {}> & import("./schemas/usuario.schema").Usuario & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
         __v: number;
     }) | null>;
 }

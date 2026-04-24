@@ -12,20 +12,23 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TEvaluacionSchema = exports.TEvaluacion = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
-let TEvaluacion = class TEvaluacion extends mongoose_2.Document {
+let TEvaluacion = class TEvaluacion {
     resultado;
     estado;
     fecharegistro;
     responsable;
     fktpostulante;
+    usuarioId;
+    keywords;
+    resultados;
 };
 exports.TEvaluacion = TEvaluacion;
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
 ], TEvaluacion.prototype, "resultado", void 0);
 __decorate([
-    (0, mongoose_1.Prop)(),
+    (0, mongoose_1.Prop)({ default: 'Completado' }),
     __metadata("design:type", String)
 ], TEvaluacion.prototype, "estado", void 0);
 __decorate([
@@ -40,8 +43,20 @@ __decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
 ], TEvaluacion.prototype, "fktpostulante", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'Usuario' }),
+    __metadata("design:type", Object)
+], TEvaluacion.prototype, "usuarioId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: [String], default: [] }),
+    __metadata("design:type", Array)
+], TEvaluacion.prototype, "keywords", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: Array, default: [] }),
+    __metadata("design:type", Array)
+], TEvaluacion.prototype, "resultados", void 0);
 exports.TEvaluacion = TEvaluacion = __decorate([
-    (0, mongoose_1.Schema)()
+    (0, mongoose_1.Schema)({ timestamps: true, collection: 'evaluaciones' })
 ], TEvaluacion);
 exports.TEvaluacionSchema = mongoose_1.SchemaFactory.createForClass(TEvaluacion);
 //# sourceMappingURL=tevaluacion.schema.js.map

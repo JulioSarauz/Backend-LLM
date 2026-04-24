@@ -45,7 +45,7 @@ exports.AppModule = AppModule = __decorate([
             suscripciones_module_1.SuscripcionesModule,
             pagos_module_1.PagosModule
         ],
-        controllers: [app_controller_1.AppController, tpostulantes_controller_1.PostulantesController, tevaluacion_controller_1.EvaluacionController],
+        controllers: [app_controller_1.AppController, tpostulantes_controller_1.PostulantesController, tevaluacion_controller_1.TEvaluacionController],
         providers: [app_service_1.AppService, ...SERVICIOS_1.SERVICIOS],
     })
 ], AppModule);

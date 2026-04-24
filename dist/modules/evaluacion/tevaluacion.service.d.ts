@@ -1,33 +1,40 @@
 import { Model } from 'mongoose';
-import { TEvaluacion } from './tevaluacion.schema';
+import { TEvaluacion, TEvaluacionDocument } from './tevaluacion.schema';
+import { UsuarioDocument } from '../usuarios/schemas/usuario.schema';
 export declare class TEvaluacionService {
     private tevaluacionModel;
-    constructor(tevaluacionModel: Model<TEvaluacion>);
-    findAll(): import("mongoose").Query<(import("mongoose").Document<unknown, {}, TEvaluacion, {}> & TEvaluacion & Required<{
+    private usuarioModel;
+    constructor(tevaluacionModel: Model<TEvaluacionDocument>, usuarioModel: Model<UsuarioDocument>);
+    findAll(): import("mongoose").Query<(import("mongoose").Document<unknown, {}, TEvaluacionDocument, {}> & TEvaluacion & import("mongoose").Document<unknown, any, any, Record<string, any>> & Required<{
         _id: unknown;
     }> & {
         __v: number;
-    })[], import("mongoose").Document<unknown, {}, TEvaluacion, {}> & TEvaluacion & Required<{
+    })[], import("mongoose").Document<unknown, {}, TEvaluacionDocument, {}> & TEvaluacion & import("mongoose").Document<unknown, any, any, Record<string, any>> & Required<{
         _id: unknown;
     }> & {
         __v: number;
-    }, {}, TEvaluacion, "find", {}>;
+    }, {}, TEvaluacionDocument, "find", {}>;
+    getHistorialByUser(userId: string): Promise<(import("mongoose").Document<unknown, {}, TEvaluacionDocument, {}> & TEvaluacion & import("mongoose").Document<unknown, any, any, Record<string, any>> & Required<{
+        _id: unknown;
+    }> & {
+        __v: number;
+    })[]>;
     generateGeminiCompletion(prompt: string, schema?: any): Promise<string>;
-    create(data: Partial<TEvaluacion>): Promise<import("mongoose").Document<unknown, {}, TEvaluacion, {}> & TEvaluacion & Required<{
+    create(data: Partial<TEvaluacion>): Promise<import("mongoose").Document<unknown, {}, TEvaluacionDocument, {}> & TEvaluacion & import("mongoose").Document<unknown, any, any, Record<string, any>> & Required<{
         _id: unknown;
     }> & {
         __v: number;
     }>;
-    aprobar(id: string, estado: string): import("mongoose").Query<(import("mongoose").Document<unknown, {}, TEvaluacion, {}> & TEvaluacion & Required<{
+    aprobar(id: string, estado: string): import("mongoose").Query<(import("mongoose").Document<unknown, {}, TEvaluacionDocument, {}> & TEvaluacion & import("mongoose").Document<unknown, any, any, Record<string, any>> & Required<{
         _id: unknown;
     }> & {
         __v: number;
-    }) | null, import("mongoose").Document<unknown, {}, TEvaluacion, {}> & TEvaluacion & Required<{
+    }) | null, import("mongoose").Document<unknown, {}, TEvaluacionDocument, {}> & TEvaluacion & import("mongoose").Document<unknown, any, any, Record<string, any>> & Required<{
         _id: unknown;
     }> & {
         __v: number;
-    }, {}, TEvaluacion, "findOneAndUpdate", {}>;
-    evaluateResumeCHATGPT(content: string, keywords: string[]): Promise<{
+    }, {}, TEvaluacionDocument, "findOneAndUpdate", {}>;
+    evaluateResumeCHATGPT(userId: string, content: string, keywords: string[]): Promise<{
         RespuestaModelo: any;
     }>;
     ObtenerContenido(content: string, numero: number): string;

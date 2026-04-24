@@ -28,6 +28,9 @@ let UsuariosService = class UsuariosService {
     async findByGoogleId(googleId) {
         return this.usuarioModel.findOne({ googleId }).exec();
     }
+    async findById(id) {
+        return this.usuarioModel.findById(id).exec();
+    }
     async updateTokens(userId, tokensToAddOrSubtract, nuevoPlan) {
         const updateData = { $inc: { tokens: tokensToAddOrSubtract } };
         if (nuevoPlan) {

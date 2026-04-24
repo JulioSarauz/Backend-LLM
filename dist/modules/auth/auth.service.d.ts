@@ -23,7 +23,7 @@ export declare class AuthService {
             tokens: any;
         };
     }>;
-    validateOAuthLogin(profile: any): Promise<import("../usuarios/schemas/usuario.schema").Usuario>;
+    validateOAuthLogin(profile: any): Promise<any>;
     generateToken(user: any): {
         access_token: string;
         user: {
@@ -33,4 +33,11 @@ export declare class AuthService {
             tokens: any;
         };
     };
+    getUsuarioProfile(userId: string): Promise<{
+        id: any;
+        email: string;
+        nombres: string;
+        tokens: number;
+        plan: string;
+    }>;
 }

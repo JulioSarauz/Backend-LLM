@@ -17,15 +17,21 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const tevaluacion_schema_1 = require("./tevaluacion.schema");
+const usuario_schema_1 = require("../usuarios/schemas/usuario.schema");
 const stopEn_1 = require("./stopwords/stopEn");
 const generative_ai_1 = require("@google/generative-ai");
 let TEvaluacionService = class TEvaluacionService {
     tevaluacionModel;
-    constructor(tevaluacionModel) {
+    usuarioModel;
+    constructor(tevaluacionModel, usuarioModel) {
         this.tevaluacionModel = tevaluacionModel;
+        this.usuarioModel = usuarioModel;
     }
     findAll() {
         return this.tevaluacionModel.find();
+    }
+    async getHistorialByUser(userId) {
+        return this.tevaluacionModel.find({ usuarioId: userId }).sort({ createdAt: -1 }).exec();
     }
     async generateGeminiCompletion(prompt, schema) {
         try {
@@ -57,17 +63,24 @@ let TEvaluacionService = class TEvaluacionService {
     aprobar(id, estado) {
         return this.tevaluacionModel.findByIdAndUpdate(id, { estado }, { new: true });
     }
-    async evaluateResumeCHATGPT(content, keywords) {
+    async evaluateResumeCHATGPT(userId, content, keywords) {
+        const costoTokens = 5;
+        const user = await this.usuarioModel.findById(userId);
+        if (!user || user.tokens < costoTokens) {
+            throw new common_1.HttpException('Tokens insuficientes', common_1.HttpStatus.PAYMENT_REQUIRED);
+        }
+        user.tokens -= costoTokens;
+        await user.save();
         const prompt = `
       Eres un experto evaluador de currículums.
       Evalúa los siguientes textos de hojas de vida y compáralos con estas palabras clave: ${keywords.join(', ')}.
       
-      Debes extraer y calcular las siguientes métricas detalladas del candidato basándote en un análisis semántico estricto de su experiencia y conocimientos:
+      Debes extraer y calcular las siguientes métricas detalladas del candidato basándote en un análisis semántico estricto:
       - score: Puntuación global de idoneidad (0-100)
-      - scoreTecnico: Puntuación específica de habilidades técnicas y herramientas (0-100)
-      - scoreExperiencia: Puntuación basada en los años y relevancia de su experiencia laboral (0-100)
-      - scoreBlando: Puntuación estimada de habilidades blandas, liderazgo o metodologías ágiles (0-100)
-      - heatmapData: Un análisis de 6 categorías exactas: 'Frontend', 'Backend', 'Arquitectura', 'Bases de Datos', 'DevOps', 'Agile'. Para cada categoría, genera un array 'cells' con exactamente 8 valores numéricos decimales (entre 0.05 y 1.0) que representen la intensidad, progresión o dominio histórico en sub-áreas de esa categoría.
+      - scoreTecnico: Puntuación específica de habilidades técnicas y herramientas requeridas (0-100)
+      - scoreExperiencia: Puntuación basada en la relevancia de su experiencia laboral (0-100)
+      - scoreBlando: Puntuación estimada de habilidades blandas, comunicación o metodologías (0-100)
+      - heatmapData: Identifica las 5 categorías principales de habilidades extraídas de ESTE currículum. Para cada categoría, genera un array 'cells' con exactamente 8 valores numéricos decimales (entre 0.05 y 1.0) que representen su nivel de dominio.
 
       LA ÚNICA RESPUESTA que debes generar es un ARRAY DE OBJETOS JSON siguiendo estrictamente el esquema provisto.
       
@@ -106,10 +119,22 @@ let TEvaluacionService = class TEvaluacionService {
         try {
             const responseText = await this.generateGeminiCompletion(prompt, evaluationSchema);
             const transformado = JSON.parse(responseText.trim());
+            const nuevaEvaluacion = new this.tevaluacionModel({
+                usuarioId: userId,
+                responsable: user.nombres,
+                fecharegistro: new Date().toISOString(),
+                keywords: keywords,
+                resultados: transformado,
+                estado: 'Completado',
+                resultado: 'Análisis IA Lote'
+            });
+            await nuevaEvaluacion.save();
             return { "RespuestaModelo": transformado };
         }
         catch (error) {
-            throw new Error('Error evaluando hoja de vida con Gemini');
+            user.tokens += costoTokens;
+            await user.save();
+            throw new common_1.HttpException('Error evaluando hoja de vida con Gemini', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     ObtenerContenido(content, numero) {
@@ -135,6 +160,8 @@ exports.TEvaluacionService = TEvaluacionService;
 exports.TEvaluacionService = TEvaluacionService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(tevaluacion_schema_1.TEvaluacion.name)),
-    __metadata("design:paramtypes", [mongoose_2.Model])
+    __param(1, (0, mongoose_1.InjectModel)(usuario_schema_1.Usuario.name)),
+    __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model])
 ], TEvaluacionService);
 //# sourceMappingURL=tevaluacion.service.js.map

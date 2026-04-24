@@ -1,14 +1,14 @@
-// adopciones/schemas/adopcion.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
-@Schema()
-export class TEvaluacion extends Document {
+export type TEvaluacionDocument = TEvaluacion & Document;
 
-  @Prop({ required: true })
+@Schema({ timestamps: true, collection: 'evaluaciones' })
+export class TEvaluacion {
+  @Prop()
   resultado: string;
 
-  @Prop()
+  @Prop({ default: 'Completado' })
   estado: string;
 
   @Prop()
@@ -19,8 +19,15 @@ export class TEvaluacion extends Document {
   
   @Prop()
   fktpostulante: string;
-  
+
+  @Prop({ type: Types.ObjectId, ref: 'Usuario' })
+  usuarioId: Types.ObjectId | string;
+
+  @Prop({ type: [String], default: [] })
+  keywords: string[];
+
+  @Prop({ type: Array, default: [] })
+  resultados: any[];
 }
 
 export const TEvaluacionSchema = SchemaFactory.createForClass(TEvaluacion);
-

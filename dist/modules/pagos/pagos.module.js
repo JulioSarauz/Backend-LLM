@@ -14,6 +14,7 @@ const pagos_service_1 = require("./pagos.service");
 const paypal_service_1 = require("./paypal.service");
 const transaccion_schema_1 = require("./schemas/transaccion.schema");
 const auth_module_1 = require("../auth/auth.module");
+const usuarios_module_1 = require("../usuarios/usuarios.module");
 let PagosModule = class PagosModule {
 };
 exports.PagosModule = PagosModule;
@@ -22,6 +23,7 @@ exports.PagosModule = PagosModule = __decorate([
         imports: [
             mongoose_1.MongooseModule.forFeature([{ name: transaccion_schema_1.Transaccion.name, schema: transaccion_schema_1.TransaccionSchema }]),
             auth_module_1.AuthModule,
+            usuarios_module_1.UsuariosModule
         ],
         controllers: [pagos_controller_1.PagosController],
         providers: [pagos_service_1.PagosService, paypal_service_1.PaypalService],

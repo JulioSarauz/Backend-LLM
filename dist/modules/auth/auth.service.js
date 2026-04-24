@@ -76,6 +76,19 @@ let AuthService = class AuthService {
             }
         };
     }
+    async getUsuarioProfile(userId) {
+        const user = await this.usuariosService.findById(userId);
+        if (!user) {
+            throw new common_1.UnauthorizedException('Usuario no encontrado');
+        }
+        return {
+            id: user._id,
+            email: user.email,
+            nombres: user.nombres,
+            tokens: user.tokens,
+            plan: user.plan
+        };
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([

@@ -18,12 +18,15 @@ const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const paypal_service_1 = require("./paypal.service");
 const transaccion_schema_1 = require("./schemas/transaccion.schema");
+const usuario_schema_1 = require("../usuarios/schemas/usuario.schema");
 let PagosService = class PagosService {
     paypalService;
     transaccionModel;
-    constructor(paypalService, transaccionModel) {
+    usuarioModel;
+    constructor(paypalService, transaccionModel, usuarioModel) {
         this.paypalService = paypalService;
         this.transaccionModel = transaccionModel;
+        this.usuarioModel = usuarioModel;
     }
     async crearOrden(dto) {
         const paypalOrder = await this.paypalService.createOrder(dto.monto);
@@ -34,10 +37,11 @@ let PagosService = class PagosService {
             tokensAdquiridos: dto.tokens,
             estado: 'PENDING',
         });
-        return await nuevaTransaccion.save().then(t => ({
+        await nuevaTransaccion.save();
+        return {
             orderId: paypalOrder.id,
             links: paypalOrder.links
-        }));
+        };
     }
     async capturarOrden(orderId) {
         const transaccion = await this.transaccionModel.findOne({ paypalOrderId: orderId });
@@ -49,6 +53,7 @@ let PagosService = class PagosService {
         if (captureResult.status === 'COMPLETED') {
             transaccion.estado = 'COMPLETED';
             await transaccion.save();
+            await this.usuarioModel.findByIdAndUpdate(transaccion.usuarioId, { $inc: { tokens: transaccion.tokensAdquiridos } });
             return { success: true, message: 'Pago completado y tokens acreditados' };
         }
         transaccion.estado = 'FAILED';
@@ -60,7 +65,9 @@ exports.PagosService = PagosService;
 exports.PagosService = PagosService = __decorate([
     (0, common_1.Injectable)(),
     __param(1, (0, mongoose_1.InjectModel)(transaccion_schema_1.Transaccion.name)),
+    __param(2, (0, mongoose_1.InjectModel)(usuario_schema_1.Usuario.name)),
     __metadata("design:paramtypes", [paypal_service_1.PaypalService,
+        mongoose_2.Model,
         mongoose_2.Model])
 ], PagosService);
 //# sourceMappingURL=pagos.service.js.map

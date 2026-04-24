@@ -17,6 +17,10 @@ export class UsuariosService {
     return this.usuarioModel.findOne({ googleId }).exec();
   }
 
+  async findById(id: string): Promise<Usuario | null> {
+    return this.usuarioModel.findById(id).exec();
+  }
+
   async updateTokens(userId: string, tokensToAddOrSubtract: number, nuevoPlan?: string): Promise<Usuario> {
     const updateData: any = { $inc: { tokens: tokensToAddOrSubtract } };
     if (nuevoPlan) {

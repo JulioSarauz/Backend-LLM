@@ -21,6 +21,13 @@ export declare class AuthController {
             tokens: any;
         };
     }>;
+    getProfile(req: any): Promise<{
+        id: any;
+        email: string;
+        nombres: string;
+        tokens: number;
+        plan: string;
+    }>;
     googleAuth(req: any): Promise<void>;
     googleAuthRedirect(req: any, res: any): Promise<void>;
 }
