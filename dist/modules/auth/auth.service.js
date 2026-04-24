@@ -14,6 +14,7 @@ const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const usuarios_service_1 = require("../usuarios/usuarios.service");
 const bcrypt = require("bcrypt");
+const nodemailer = require("nodemailer");
 let AuthService = class AuthService {
     usuariosService;
     jwtService;
@@ -51,10 +52,79 @@ let AuthService = class AuthService {
                 otpExpires: expiry
             });
         }
-        console.log('\n=============================================');
-        console.log(`✉️ SIMULACIÓN DE EMAIL ENVIADO A: ${user.email}`);
-        console.log(`🔑 TU CÓDIGO OTP ES: ${otpCode}`);
-        console.log('=============================================\n');
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.CORREO_SEND_MAIL,
+                pass: process.env.CLAVE_SEND_MAIL
+            }
+        });
+        await transporter.sendMail({
+            from: `"ResumeAnalyzer IA" <${process.env.CORREO_SEND_MAIL}>`,
+            to: user.email,
+            subject: 'Tu código de acceso - ResumeAnalyzer IA',
+            html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #07080f; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #ffffff;">
+          
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #07080f; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                
+                <table width="100%" max-width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #0a0b16; border: 1px solid #1f2133; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+                  
+                  <tr>
+                    <td align="center" style="padding: 40px 40px 20px 40px;">
+                      <div style="background-color: #5b6af0; width: 60px; height: 60px; border-radius: 16px; display: inline-block; line-height: 60px; font-size: 24px; font-weight: bold; color: #ffffff; text-align: center; margin-bottom: 20px;">
+                        RA
+                      </div>
+                      <h1 style="margin: 0; font-size: 28px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">ResumeAnalyzer <span style="color: #00e5c0;">IA</span></h1>
+                      <p style="margin: 10px 0 0 0; font-size: 14px; color: #8a8d9e; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;">Motor de Selección Inteligente</p>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td align="center" style="padding: 20px 40px 40px 40px;">
+                      <p style="margin: 0 0 30px 0; font-size: 16px; line-height: 24px; color: #b4b6c4;">
+                        Hola <strong>${registerDto.nombres}</strong>,<br><br>
+                        Estás a un paso de acceder a la plataforma. Usa el siguiente código de un solo uso (OTP) para verificar tu identidad y activar tu cuenta.
+                      </p>
+
+                      <div style="background-color: #12142b; border: 2px dashed #5b6af0; border-radius: 16px; padding: 30px 20px; margin: 0 auto; max-width: 300px;">
+                        <p style="margin: 0 0 10px 0; font-size: 12px; color: #8a8d9e; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">CÓDIGO DE ACCESO</p>
+                        <h2 style="margin: 0; font-size: 42px; font-weight: 900; color: #00e5c0; letter-spacing: 8px;">${otpCode}</h2>
+                      </div>
+
+                      <p style="margin: 30px 0 0 0; font-size: 14px; color: #ff5c7a; font-weight: 600;">
+                        ⏱️ Este código expira en exactamente 10 minutos.
+                      </p>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td align="center" style="padding: 30px 40px; background-color: #05060a; border-top: 1px solid #1f2133;">
+                      <p style="margin: 0; font-size: 12px; color: #55576a; line-height: 18px;">
+                        Si no solicitaste este registro, puedes ignorar este correo de forma segura.<br>
+                        © 2026 ResumeAnalyzer IA. Todos los derechos reservados.
+                      </p>
+                    </td>
+                  </tr>
+
+                </table>
+
+              </td>
+            </tr>
+          </table>
+
+        </body>
+        </html>
+      `
+        });
         return { message: 'Código enviado al correo', email: user.email };
     }
     async verifyOtp(email, otp) {

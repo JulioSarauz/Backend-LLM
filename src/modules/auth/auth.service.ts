@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UsuariosService } from '../usuarios/usuarios.service';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class AuthService {
@@ -18,30 +19,24 @@ export class AuthService {
       if (user.googleId) {
         throw new BadRequestException('Este correo usa Google. Ve a Iniciar Sesión.');
       }
-      // Si ya está verificado, no dejamos registrar
       if (user.isVerified || user.isVerified === undefined) { 
         throw new BadRequestException('El correo ya está registrado y verificado. Por favor, inicia sesión.');
       }
-      // Si existe pero NO está verificado, sobreescribiremos su OTP más abajo
     }
     
-    // Generar OTP de 6 dígitos
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiry = new Date();
-    // El código expira en 10 minutos
     expiry.setMinutes(expiry.getMinutes() + 10); 
     
     const hashedPassword = await bcrypt.hash(registerDto.password || '', 10);
     
     if (user) {
-      // Actualizar usuario no verificado existente
       user.password = hashedPassword;
       user.nombres = registerDto.nombres;
       user.otp = otpCode;
       user.otpExpires = expiry;
       await user.save();
     } else {
-      // Crear usuario nuevo no verificado
       user = await this.usuariosService.create({
         ...registerDto,
         password: hashedPassword,
@@ -51,12 +46,81 @@ export class AuthService {
       });
     }
 
-    // AQUI ENVIARIAS EL EMAIL REAL (Nodemailer, SendGrid, Resend, etc)
-    console.log('\n=============================================');
-    console.log(`✉️ SIMULACIÓN DE EMAIL ENVIADO A: ${user.email}`);
-    console.log(`🔑 TU CÓDIGO OTP ES: ${otpCode}`);
-    console.log('=============================================\n');
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.CORREO_SEND_MAIL, 
+        pass: process.env.CLAVE_SEND_MAIL 
+      }
+    });
 
+   await transporter.sendMail({
+      from: `"ResumeAnalyzer IA" <${process.env.CORREO_SEND_MAIL}>`,
+      to: user.email,
+      subject: 'Tu código de acceso - ResumeAnalyzer IA',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #07080f; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #ffffff;">
+          
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #07080f; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                
+                <table width="100%" max-width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #0a0b16; border: 1px solid #1f2133; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+                  
+                  <tr>
+                    <td align="center" style="padding: 40px 40px 20px 40px;">
+                      <div style="background-color: #5b6af0; width: 60px; height: 60px; border-radius: 16px; display: inline-block; line-height: 60px; font-size: 24px; font-weight: bold; color: #ffffff; text-align: center; margin-bottom: 20px;">
+                        RA
+                      </div>
+                      <h1 style="margin: 0; font-size: 28px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">ResumeAnalyzer <span style="color: #00e5c0;">IA</span></h1>
+                      <p style="margin: 10px 0 0 0; font-size: 14px; color: #8a8d9e; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;">Motor de Selección Inteligente</p>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td align="center" style="padding: 20px 40px 40px 40px;">
+                      <p style="margin: 0 0 30px 0; font-size: 16px; line-height: 24px; color: #b4b6c4;">
+                        Hola <strong>${registerDto.nombres}</strong>,<br><br>
+                        Estás a un paso de acceder a la plataforma. Usa el siguiente código de un solo uso (OTP) para verificar tu identidad y activar tu cuenta.
+                      </p>
+
+                      <div style="background-color: #12142b; border: 2px dashed #5b6af0; border-radius: 16px; padding: 30px 20px; margin: 0 auto; max-width: 300px;">
+                        <p style="margin: 0 0 10px 0; font-size: 12px; color: #8a8d9e; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">CÓDIGO DE ACCESO</p>
+                        <h2 style="margin: 0; font-size: 42px; font-weight: 900; color: #00e5c0; letter-spacing: 8px;">${otpCode}</h2>
+                      </div>
+
+                      <p style="margin: 30px 0 0 0; font-size: 14px; color: #ff5c7a; font-weight: 600;">
+                        ⏱️ Este código expira en exactamente 10 minutos.
+                      </p>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td align="center" style="padding: 30px 40px; background-color: #05060a; border-top: 1px solid #1f2133;">
+                      <p style="margin: 0; font-size: 12px; color: #55576a; line-height: 18px;">
+                        Si no solicitaste este registro, puedes ignorar este correo de forma segura.<br>
+                        © 2026 ResumeAnalyzer IA. Todos los derechos reservados.
+                      </p>
+                    </td>
+                  </tr>
+
+                </table>
+
+              </td>
+            </tr>
+          </table>
+
+        </body>
+        </html>
+      `
+    });
+    
     return { message: 'Código enviado al correo', email: user.email };
   }
 
@@ -76,13 +140,11 @@ export class AuthService {
       throw new UnauthorizedException('El código ha expirado. Regístrate de nuevo.');
     }
 
-    // Verificación exitosa
     user.isVerified = true;
     user.otp = undefined;
     user.otpExpires = undefined;
     await user.save();
 
-    // Ahora sí devolvemos el Token JWT
     return this.generateToken(user);
   }
 
@@ -97,7 +159,6 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
     
-    // BLOQUEO: Si no está verificado, no puede loguearse
     if (user.isVerified === false) {
       throw new UnauthorizedException('Tu cuenta no ha sido verificada. Debes completar el registro.');
     }
@@ -115,14 +176,14 @@ export class AuthService {
       user = await this.usuariosService.findByEmail(profile.email);
       if (user) {
         user.googleId = profile.googleId;
-        user.isVerified = true; // Cuentas de Google ya vienen verificadas
+        user.isVerified = true; 
         await user.save();
       } else {
         user = await this.usuariosService.create({
           email: profile.email,
           nombres: profile.nombres,
           googleId: profile.googleId,
-          isVerified: true // Cuentas de Google ya vienen verificadas
+          isVerified: true 
         });
       }
     }

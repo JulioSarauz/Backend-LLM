@@ -61,7 +61,6 @@ export class AuthController {
     res.redirect(`${frontendUrl}/login?token=${access_token}`);
   }
 
-  // Añade este endpoint en tu auth.controller.ts (debajo del @Post('register'))
   @Post('verify-otp')
   async verifyOtp(@Body() body: { email: string, otp: string }) {
     console.log(`[Auth Controller] -> Verificando OTP para ${body.email}`);
