@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsuariosService } from '../usuarios/usuarios.service';
 import * as bcrypt from 'bcrypt';
@@ -12,33 +12,100 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto) {
-    const userExists = await this.usuariosService.findByEmail(registerDto.email);
-    if (userExists) {
-      throw new UnauthorizedException('El usuario ya existe');
+    let user: any = await this.usuariosService.findByEmail(registerDto.email);
+    
+    if (user) {
+      if (user.googleId) {
+        throw new BadRequestException('Este correo usa Google. Ve a Iniciar Sesión.');
+      }
+      // Si ya está verificado, no dejamos registrar
+      if (user.isVerified || user.isVerified === undefined) { 
+        throw new BadRequestException('El correo ya está registrado y verificado. Por favor, inicia sesión.');
+      }
+      // Si existe pero NO está verificado, sobreescribiremos su OTP más abajo
     }
     
-    const password = registerDto.password || ''; 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Generar OTP de 6 dígitos
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = new Date();
+    // El código expira en 10 minutos
+    expiry.setMinutes(expiry.getMinutes() + 10); 
     
-    const user = await this.usuariosService.create({
-      ...registerDto,
-      password: hashedPassword,
-    });
+    const hashedPassword = await bcrypt.hash(registerDto.password || '', 10);
+    
+    if (user) {
+      // Actualizar usuario no verificado existente
+      user.password = hashedPassword;
+      user.nombres = registerDto.nombres;
+      user.otp = otpCode;
+      user.otpExpires = expiry;
+      await user.save();
+    } else {
+      // Crear usuario nuevo no verificado
+      user = await this.usuariosService.create({
+        ...registerDto,
+        password: hashedPassword,
+        isVerified: false,
+        otp: otpCode,
+        otpExpires: expiry
+      });
+    }
+
+    // AQUI ENVIARIAS EL EMAIL REAL (Nodemailer, SendGrid, Resend, etc)
+    console.log('\n=============================================');
+    console.log(`✉️ SIMULACIÓN DE EMAIL ENVIADO A: ${user.email}`);
+    console.log(`🔑 TU CÓDIGO OTP ES: ${otpCode}`);
+    console.log('=============================================\n');
+
+    return { message: 'Código enviado al correo', email: user.email };
+  }
+
+  async verifyOtp(email: string, otp: string) {
+    const user: any = await this.usuariosService.findByEmail(email);
+    
+    if (!user) {
+      throw new UnauthorizedException('Usuario no encontrado');
+    }
+    if (user.isVerified) {
+      throw new BadRequestException('La cuenta ya está verificada');
+    }
+    if (user.otp !== otp) {
+      throw new UnauthorizedException('El código OTP es incorrecto');
+    }
+    if (new Date() > new Date(user.otpExpires)) {
+      throw new UnauthorizedException('El código ha expirado. Regístrate de nuevo.');
+    }
+
+    // Verificación exitosa
+    user.isVerified = true;
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    // Ahora sí devolvemos el Token JWT
     return this.generateToken(user);
   }
 
   async login(loginDto: LoginDto) {
-    const user = await this.usuariosService.findByEmail(loginDto.email);
-    if (!user || !user.password) {
+    const user: any = await this.usuariosService.findByEmail(loginDto.email);
+    if (!user) throw new UnauthorizedException('Credenciales inválidas');
+
+    if (!user.password) {
+      if (user.googleId) {
+        throw new UnauthorizedException('Esta cuenta usa Google. Por favor, haz clic en "Continuar con Google".');
+      }
       throw new UnauthorizedException('Credenciales inválidas');
+    }
+    
+    // BLOQUEO: Si no está verificado, no puede loguearse
+    if (user.isVerified === false) {
+      throw new UnauthorizedException('Tu cuenta no ha sido verificada. Debes completar el registro.');
     }
     
     const password = loginDto.password || '';
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) throw new UnauthorizedException('Credenciales inválidas');
     
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Credenciales inválidas');
-    }
     return this.generateToken(user);
   }
 
@@ -48,12 +115,14 @@ export class AuthService {
       user = await this.usuariosService.findByEmail(profile.email);
       if (user) {
         user.googleId = profile.googleId;
+        user.isVerified = true; // Cuentas de Google ya vienen verificadas
         await user.save();
       } else {
         user = await this.usuariosService.create({
           email: profile.email,
           nombres: profile.nombres,
           googleId: profile.googleId,
+          isVerified: true // Cuentas de Google ya vienen verificadas
         });
       }
     }

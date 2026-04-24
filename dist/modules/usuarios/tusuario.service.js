@@ -28,6 +28,9 @@ let UsuariosService = class UsuariosService {
     async findByGoogleId(googleId) {
         return this.usuarioModel.findOne({ googleId }).exec();
     }
+    async findById(id) {
+        return this.usuarioModel.findById(id).exec();
+    }
     async updateTokens(userId, tokensToAddOrSubtract, nuevoPlan) {
         const updateData = { $inc: { tokens: tokensToAddOrSubtract } };
         if (nuevoPlan) {
@@ -70,6 +73,77 @@ let UsuariosService = class UsuariosService {
     }
     remove(id) {
         return this.usuarioModel.findByIdAndUpdate(id, { estado: 'Inactivo' }, { new: true }).exec();
+    }
+    async register(registerDto) {
+        let user = await this.usuariosService.findByEmail(registerDto.email);
+        if (user) {
+            if (user.googleId) {
+                throw new BadRequestException('Este correo usa Google. Ve a Iniciar Sesión.');
+            }
+            if (user.isVerified || user.isVerified === undefined) {
+                throw new BadRequestException('El correo ya está registrado y verificado. Por favor, inicia sesión.');
+            }
+        }
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiry = new Date();
+        expiry.setMinutes(expiry.getMinutes() + 10);
+        const hashedPassword = await bcrypt.hash(registerDto.password || '', 10);
+        if (user) {
+            user.password = hashedPassword;
+            user.nombres = registerDto.nombres;
+            user.otp = otpCode;
+            user.otpExpires = expiry;
+            await user.save();
+        }
+        else {
+            user = await this.usuariosService.create({
+                ...registerDto,
+                password: hashedPassword,
+                isVerified: false,
+                otp: otpCode,
+                otpExpires: expiry
+            });
+        }
+        console.log('\n=============================================');
+        console.log(`✉️ SIMULACIÓN DE EMAIL ENVIADO A: ${user.email}`);
+        console.log(`🔑 TU CÓDIGO OTP ES: ${otpCode}`);
+        console.log('=============================================\n');
+        return { message: 'Código enviado al correo', email: user.email };
+    }
+    async verifyOtp(email, otp) {
+        const user = await this.usuariosService.findByEmail(email);
+        if (!user) {
+            throw new UnauthorizedException('Usuario no encontrado');
+        }
+        if (user.isVerified) {
+            throw new BadRequestException('La cuenta ya está verificada');
+        }
+        if (user.otp !== otp) {
+            throw new UnauthorizedException('El código OTP es incorrecto');
+        }
+        if (new Date() > new Date(user.otpExpires)) {
+            throw new UnauthorizedException('El código ha expirado. Regístrate de nuevo.');
+        }
+        user.isVerified = true;
+        user.otp = undefined;
+        user.otpExpires = undefined;
+        await user.save();
+        return this.generateToken(user);
+    }
+    async login(loginDto) {
+        const user = await this.usuariosService.findByEmail(loginDto.email);
+        if (!user)
+            throw new UnauthorizedException('Credenciales inválidas');
+        if (user.googleId && !user.password) {
+            throw new UnauthorizedException('Esta cuenta usa Google. Por favor, usa el botón de Google.');
+        }
+        if (user.isVerified === false) {
+            throw new UnauthorizedException('Tu cuenta no ha sido verificada. Debes completar el registro.');
+        }
+        const isPasswordValid = await bcrypt.compare(loginDto.password || '', user.password);
+        if (!isPasswordValid)
+            throw new UnauthorizedException('Credenciales inválidas');
+        return this.generateToken(user);
     }
 };
 exports.UsuariosService = UsuariosService;

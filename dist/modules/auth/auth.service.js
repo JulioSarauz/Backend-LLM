@@ -22,28 +22,78 @@ let AuthService = class AuthService {
         this.jwtService = jwtService;
     }
     async register(registerDto) {
-        const userExists = await this.usuariosService.findByEmail(registerDto.email);
-        if (userExists) {
-            throw new common_1.UnauthorizedException('El usuario ya existe');
+        let user = await this.usuariosService.findByEmail(registerDto.email);
+        if (user) {
+            if (user.googleId) {
+                throw new common_1.BadRequestException('Este correo usa Google. Ve a Iniciar Sesión.');
+            }
+            if (user.isVerified || user.isVerified === undefined) {
+                throw new common_1.BadRequestException('El correo ya está registrado y verificado. Por favor, inicia sesión.');
+            }
         }
-        const password = registerDto.password || '';
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = await this.usuariosService.create({
-            ...registerDto,
-            password: hashedPassword,
-        });
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiry = new Date();
+        expiry.setMinutes(expiry.getMinutes() + 10);
+        const hashedPassword = await bcrypt.hash(registerDto.password || '', 10);
+        if (user) {
+            user.password = hashedPassword;
+            user.nombres = registerDto.nombres;
+            user.otp = otpCode;
+            user.otpExpires = expiry;
+            await user.save();
+        }
+        else {
+            user = await this.usuariosService.create({
+                ...registerDto,
+                password: hashedPassword,
+                isVerified: false,
+                otp: otpCode,
+                otpExpires: expiry
+            });
+        }
+        console.log('\n=============================================');
+        console.log(`✉️ SIMULACIÓN DE EMAIL ENVIADO A: ${user.email}`);
+        console.log(`🔑 TU CÓDIGO OTP ES: ${otpCode}`);
+        console.log('=============================================\n');
+        return { message: 'Código enviado al correo', email: user.email };
+    }
+    async verifyOtp(email, otp) {
+        const user = await this.usuariosService.findByEmail(email);
+        if (!user) {
+            throw new common_1.UnauthorizedException('Usuario no encontrado');
+        }
+        if (user.isVerified) {
+            throw new common_1.BadRequestException('La cuenta ya está verificada');
+        }
+        if (user.otp !== otp) {
+            throw new common_1.UnauthorizedException('El código OTP es incorrecto');
+        }
+        if (new Date() > new Date(user.otpExpires)) {
+            throw new common_1.UnauthorizedException('El código ha expirado. Regístrate de nuevo.');
+        }
+        user.isVerified = true;
+        user.otp = undefined;
+        user.otpExpires = undefined;
+        await user.save();
         return this.generateToken(user);
     }
     async login(loginDto) {
         const user = await this.usuariosService.findByEmail(loginDto.email);
-        if (!user || !user.password) {
+        if (!user)
             throw new common_1.UnauthorizedException('Credenciales inválidas');
+        if (!user.password) {
+            if (user.googleId) {
+                throw new common_1.UnauthorizedException('Esta cuenta usa Google. Por favor, haz clic en "Continuar con Google".');
+            }
+            throw new common_1.UnauthorizedException('Credenciales inválidas');
+        }
+        if (user.isVerified === false) {
+            throw new common_1.UnauthorizedException('Tu cuenta no ha sido verificada. Debes completar el registro.');
         }
         const password = loginDto.password || '';
         const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
+        if (!isPasswordValid)
             throw new common_1.UnauthorizedException('Credenciales inválidas');
-        }
         return this.generateToken(user);
     }
     async validateOAuthLogin(profile) {
@@ -52,6 +102,7 @@ let AuthService = class AuthService {
             user = await this.usuariosService.findByEmail(profile.email);
             if (user) {
                 user.googleId = profile.googleId;
+                user.isVerified = true;
                 await user.save();
             }
             else {
@@ -59,6 +110,7 @@ let AuthService = class AuthService {
                     email: profile.email,
                     nombres: profile.nombres,
                     googleId: profile.googleId,
+                    isVerified: true
                 });
             }
         }

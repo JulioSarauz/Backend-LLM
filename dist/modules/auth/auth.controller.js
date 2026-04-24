@@ -23,21 +23,43 @@ let AuthController = class AuthController {
     constructor(authService) {
         this.authService = authService;
     }
-    register(registerDto) {
-        return this.authService.register(registerDto);
+    async register(registerDto) {
+        console.log('[Auth Controller] -> Petición de REGISTRO entrante:', registerDto);
+        const result = await this.authService.register(registerDto);
+        console.log('[Auth Controller] <- Respuesta de REGISTRO generada:', result);
+        return result;
     }
-    login(loginDto) {
-        return this.authService.login(loginDto);
+    async login(loginDto) {
+        console.log('[Auth Controller] -> Petición de LOGIN entrante. Email:', loginDto.email);
+        console.log('[Auth Controller] -> Datos completos (Body):', loginDto);
+        const result = await this.authService.login(loginDto);
+        console.log('[Auth Controller] <- Respuesta de LOGIN generada con éxito (Token creado).');
+        return result;
     }
     async getProfile(req) {
+        console.log('[Auth Controller] -> Petición de PROFILE entrante. Datos del Token (req.user):', req.user);
         const userId = req.user.userId || req.user.id || req.user.sub;
-        return this.authService.getUsuarioProfile(userId);
+        console.log('[Auth Controller] -> ID de usuario extraído:', userId);
+        const profile = await this.authService.getUsuarioProfile(userId);
+        console.log('[Auth Controller] <- Perfil devuelto desde DB:', profile);
+        return profile;
     }
-    async googleAuth(req) { }
+    async googleAuth(req) {
+        console.log('[Auth Controller] -> Iniciando redirección a Google OAuth...');
+    }
     async googleAuthRedirect(req, res) {
+        console.log('[Auth Controller] -> Callback de Google recibido. Perfil extraído:', req.user);
         const { access_token } = this.authService.generateToken(req.user);
+        console.log('[Auth Controller] <- JWT Generado tras OAuth:', access_token);
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+        console.log(`[Auth Controller] <- Redirigiendo al frontend: ${frontendUrl}/login?token=...`);
         res.redirect(`${frontendUrl}/login?token=${access_token}`);
+    }
+    async verifyOtp(body) {
+        console.log(`[Auth Controller] -> Verificando OTP para ${body.email}`);
+        const result = await this.authService.verifyOtp(body.email, body.otp);
+        console.log('[Auth Controller] <- OTP Correcto. Token generado.');
+        return result;
     }
 };
 exports.AuthController = AuthController;
@@ -46,14 +68,14 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [auth_dto_1.RegisterDto]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], AuthController.prototype, "register", null);
 __decorate([
     (0, common_1.Post)('login'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [auth_dto_1.LoginDto]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
@@ -80,6 +102,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "googleAuthRedirect", null);
+__decorate([
+    (0, common_1.Post)('verify-otp'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "verifyOtp", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService])

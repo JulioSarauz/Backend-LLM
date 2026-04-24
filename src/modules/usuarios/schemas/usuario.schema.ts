@@ -23,6 +23,15 @@ export class Usuario { // Removed "extends Document" here as it's better handled
 
   @Prop({ default: 'Gratis' })
   plan: string;
+  
+  @Prop({ default: false })
+  isVerified: boolean;
+
+  @Prop()
+  otp?: string;
+
+  @Prop()
+  otpExpires?: Date;
 } 
 
 export const UsuarioSchema = SchemaFactory.createForClass(Usuario);

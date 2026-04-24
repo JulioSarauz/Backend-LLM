@@ -6,6 +6,10 @@ export declare class AuthService {
     private jwtService;
     constructor(usuariosService: UsuariosService, jwtService: JwtService);
     register(registerDto: RegisterDto): Promise<{
+        message: string;
+        email: any;
+    }>;
+    verifyOtp(email: string, otp: string): Promise<{
         access_token: string;
         user: {
             id: any;

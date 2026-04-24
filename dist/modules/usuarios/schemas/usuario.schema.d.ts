@@ -7,6 +7,9 @@ export declare class Usuario {
     googleId?: string;
     tokens: number;
     plan: string;
+    isVerified: boolean;
+    otp?: string;
+    otpExpires?: Date;
 }
 export declare const UsuarioSchema: import("mongoose").Schema<Usuario, import("mongoose").Model<Usuario, any, any, any, Document<unknown, any, Usuario, any> & Usuario & {
     _id: import("mongoose").Types.ObjectId;

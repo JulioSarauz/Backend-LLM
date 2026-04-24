@@ -18,6 +18,9 @@ let Usuario = class Usuario {
     googleId;
     tokens;
     plan;
+    isVerified;
+    otp;
+    otpExpires;
 };
 exports.Usuario = Usuario;
 __decorate([
@@ -44,6 +47,18 @@ __decorate([
     (0, mongoose_1.Prop)({ default: 'Gratis' }),
     __metadata("design:type", String)
 ], Usuario.prototype, "plan", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: false }),
+    __metadata("design:type", Boolean)
+], Usuario.prototype, "isVerified", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], Usuario.prototype, "otp", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Date)
+], Usuario.prototype, "otpExpires", void 0);
 exports.Usuario = Usuario = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true, collection: 'usuarios' })
 ], Usuario);
